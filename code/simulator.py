@@ -27,7 +27,7 @@ os.environ['PYSYN_CDBS'] = os.path.join(os.getcwd(),'sim_input','cdbs')
 os.environ['WEBBPSF_PATH'] = os.path.join(os.getcwd(),"sim_input","webbpsf-data")
 os.environ['WEBBPSF_SKIP_CHECK'] = '1'
 os.environ['pandeia_refdata'] = os.path.join(os.getcwd(), "sim_input", "pandeia_data")
-os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input")
+os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input", "stips_data")
 
 sys.path.append(os.path.join(os.getcwd(),"lib"))
 
