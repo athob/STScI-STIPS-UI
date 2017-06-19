@@ -6,6 +6,7 @@ code/sim_input/webbpsf-data
 code/stips
 *.pickle
 code/static/sim_temp/sim*
+code/sim_input/psf_cache/psf*.fits
 
 # Compiled source #
 ###################
