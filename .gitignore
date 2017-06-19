@@ -4,6 +4,8 @@ code/sim_input/cdbs
 code/sim_input/pandeia_data
 code/sim_input/webbpsf-data
 code/stips
+*.pickle
+code/static/sim_temp/sim*
 
 # Compiled source #
 ###################
