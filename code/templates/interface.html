@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}STIPS Interface{% endblock %}
+
+{% block additionalscripts %}
+<script>
+	{% if anchor != '' %}
+	$(function(){ window.location.hash = "{{anchor}}"; });
+	{% endif %}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="center">
+<h2>Main Interface</h3>
+</div>
+
+<div class="center">
+	<a href="/static/images/main.png" target="_blank">
+		<img width="480" src="/static/images/main.png" caption="STIPS Main Interface Screenshot">
+	</a>
+</div>
+<p>
+	The STIPS main page shows a summary of the current simulation, and allows parts of the 
+	simulation to be added, removed, or edited. Specific features of note include:
+</p>
+<ul>
+	<li>
+		<strong>Reset Simulation</strong> button: This loads a new, blank simulation (with a new 
+		simulation ID).
+	</li>
+	<li>
+		<strong>Recall Previous Simulation <span id="STIPSInterface-RecallSimulation"></span>
+		</strong> button: This allows you to copy a previous simulation (by ID), and either repeat 
+		it or open it for editing. The copy will have the current ID.
+	</li>
+	<li>
+		<strong>User Information <span id="STIPSInterface-UserInformation"></span></strong>: 
+		Currently this stores an e-mail address. When filled in, information about the simulation 
+		will be e-mailed to the address when the simulation begins, and a notice will be sent when 
+		the simulation completes. If the simulation fails to run, an error traceback will be sent to 
+		the provided address (if any).
+	</li>
+	<li>
+		<strong>General Scene Parameters <span id="STIPSInterface-GeneralSceneParameters">
+		</span></strong>: These include the scene's location on the sky (RA and DEC), and the 
+		simulation's random number seed. The random number seed is an important characteristic 
+		because, if the same parameters are selected for two simulations, the seed determines 
+		whether the simulations will be identical. If they have the same seed, they will be 
+		identical.<br />
+		<ul>
+			<li>
+				<strong>Note on future plans: </strong>STIPS may eventually offer the ability to add 
+				stars, gas, dust, etc. based on the simulation location. If and when it happens, 
+				that will be selected here. STIPS may also eventually offer the ability to have the 
+				program choose a random number seed. If and when that is available, it will also be 
+				selectable here.
+			</li>
+		</ul>
+	</li>
+	<li>
+		<strong>Input Files <span id="STIPSInterface-InputFiles"></span></strong>: These are in two forms – background images and source catalogues.<br />
+		<ul>
+			<li>
+				<strong>Background Images</strong> must be FITS files, and should be in whatever filter is being observed. They will be added to <em>all</em> exposures in the current simulation.
+			</li>
+			<li>
+				<strong>Source Catalogues</strong> may contain any number of point or extended sources. The required format can be found 
+				<a href="http://www.stsci.edu/wfirst/software/STIPS/catalogue_format" target="_blank">here</a>.
+			</li>
+		</ul>
+	</li>
+	<li>
+		<strong>Residual Errors <span id="STIPSInterface-Residuals"></span></strong>: STIPS can either produce an error-free simulation (where the only effects present will be the PSF and sky background), or can add up to three varieties of error residual. These residuals are intended to show the image at the end of pipeline processing, and represent the residual sources of error that the pipeline is unable to remove.
+	</li>
+</ul>
+
+<h2 class="center"><strong>Scene Generation Parameters</strong><span  id="STIPSInterface-SceneParameters"></span></h2>
+
+<h3>Stellar Populations <span id="STIPSInterface-StellarPopulations"></span></h3>
+
+<div class="center">
+	<a href="/static/images/stellar_pop.png">
+		<img src="/static/images/stellar_pop.png" width="480" caption="STIPS Stellar Population">
+	</a>
+</div>
+<p>
+	This form allows you to add a stellar population to the simulation. In the case of parameters with ranges ([Fe/H], Age, Distance), stars are distributed uniformly between the lower and upper bounds, with no reference to other parameters. The RA and DEC offsets are from the centre of the observation. A summary of the parameters follows:
+</p>
+<ul>
+	<li>
+		<strong>Number of Stars</strong>: The number of stars to include. The current limit is 1,000,000 stars in any given population.
+	</li>
+	<li>
+		<strong>Metallicity</strong> (also [Fe/H]): Logarithmic metallicity relative to solar, ranging from -2.2 to +0.5.
+	</li>
+	<li>
+		<strong>Age</strong>: This can currently range from 1 million years to 13.5 billion years.
+	</li>
+	<li>
+		<strong>IMF</strong>: This may be one of:<br />
+		<ul>
+			<li>Power law (user-selectable alpha value)</li>
+			<li>Kroupa</li>
+			<li>Salpeter</li>
+			<li>Schechter (with or without exponential cut-off)</li>
+		</ul>
+	</li>
+	<li>
+		<strong>Binary Fraction</strong>: The fraction of stars that are part of binary systems. The binary companion will be drawn from the same IMF (including the same age and metallicity) as the parent.
+	</li>
+	<li>
+		<strong>Distribution</strong>: This may be one of four options. In any option, higher-mass stars may be moved closer to the population centre (in order to create a globular cluster, for example)<br />
+		<ul>
+			<li>Exponential</li>
+			<li>Power Law</li>
+			<li>Inverse Power Law</li>
+			<li>Uniform</li>
+		</ul>
+	</li>
+	<li><strong>Radius</strong>: In one of parsecs or arcseconds.</li>
+	<li><strong>Offset</strong>: From the centre of the observation</li>
+	<li><strong>Distance</strong>: In kpc.</li>
+</ul>
+<p>Once added, a stellar population is represented by a summary (an example is shown below).</p>
+<div class="center">
+	<a href="/static/images/stellar_summary.png">
+		<img src="/static/images/stellar_summary.png" width="480" caption="STIPS Stellar Population 
+		Summary">
+	</a>
+</div>
+
+<h3>Galaxy Populations <span id="STIPSInterface-GalaxyPopulations"></span></h3>
+
+<div class="center">
+	<a href="/static/images/galaxy.png">
+		<img src="/static/images/galaxy.png" width="480" caption="STIPS Galaxy Population">
+	</a>
+</div>
+<p">
+	As with <a href="#STIPSInterface-StellarPopulations">Stellar Populations</a>, the galaxy 
+	population dialog allows the parameters of a new population to be selected. The number of 
+	galaxies, distribution, cluster radius, and cluster offset are handled the same way as in <a 
+	href="#STIPSInterface-StellarPopulations">Stellar Populations</a>. The other parameters 
+	are:
+</p>
+<ul>
+	<li>
+		<strong>Redshift</strong>: Uniformly distributed. Redshift is not necessarily related to any 
+		of the other parameters, so high redshifts can lead to anomalously bright redshifted 
+		galaxies.
+	</li>
+	<li>
+		<strong>Half-light Radii</strong>: Uniformly distributed. Independent of redshift and 
+		apparent magnitude.
+	</li>
+	<li>
+		<strong>Apparent Magnitudes</strong>: Uniformly distributed. Independent of redshift and 
+		half-light radius.
+	</li>
+</ul>
+<p>
+	Again, as with <a href="#STIPSInterface-StellarPopulations">StellarPopulations</a>, an added 
+	population is represented by a summary on the page, with an example below:
+</p>
+<div class="center">
+	<a href="/static/images/galaxy_summary.png">
+		<img src="/static/images/galaxy_summary.png" width="480" caption="STIPS Galaxy Population 
+		Summary">
+	</a>
+</div>
+
+<h2 class="centre">Observation Parameters <span id="STIPSInterface-Observations"></span></h2>
+
+<div class="center">
+	<a href="/static/images/observation.png">
+		<img src="/static/images/observation.png" width="480" caption="STIPS Observation">
+	</a>
+</div>
+<p>
+	An observation consists of one or more <strong>exposures</strong> (technically zero or more, but a zero-exposure observation will produce no output), with one or more filters belonging to a single instrument or detector (so for example, NIRCamLong and NIRCamShort would be considered separate instruments for STIPS). The parameters are as follows:
+</p>
+<ul>
+	<li>
+		<strong>Detectors</strong>: For instruments with more than one detector (e.g. NIRCamShort 
+		with 8, or WFIRST WFI with 18), it is possible to select how many of those detectors should 
+		be included in the observation. This allows you to avoid simulating detectors which would 
+		not receive any data from the chosen scene.
+	</li>
+	<li>
+		<strong>Include Centred Exposure</strong>: If checked, a single exposure with an offset of 
+		(0, 0) in RA and DEC, and at a PA of 0 degrees, with automatically be added to the exposure 
+		when it is created. If it is not selected, then an empty observation will be 
+		created.</li>
+	<li>
+		<strong>Filters</strong>: You may choose as many filters as you wish, and all exposures will 
+		be observed through all filters. At least one filter should be chosen or the observation 
+		will generate no data.
+	</li>
+	<li>
+		<strong>Oversample</strong>: This determines how many internal detector pixels will be used to represent each pixel on the detector. A value of 1 will only allow sources at integer pixel co-ordinates. The number of internal pixels used will always be an NxN square, where N is the oversample value.
+	</li>
+	<li>
+		<strong>PSF Pupil Mask</strong>: This allows commands to be sent directly to webbpsf. Don't 
+		use it unless you know what you're doing.
+	</li>
+	<li>
+		<strong>Background</strong>: Currently only the average background value is available. 
+		Eventually all of the Pandeia background values will be available, as well as backgrounds 
+		matched to the scene RA and DEC.
+	</li>
+</ul>
+<p>
+	A completed observation will produce the following summary. Note that an added observation 
+	includes the ability to add both single exposures and dither patterns.
+</p>
+<div class="center">
+	<a href="/static/images/obs_summary.png">
+		<img src="/static/images/obs_summary.png" width="480" caption="STIPS Observation Summary">
+	</a>
+</div>
+
+<h3>Single Exposure <span id="STIPSInterface-ObservationSingleExposure"></span></h3>
+
+<div class="center">
+	<a href="/static/images/exposure.png">
+		<img src="/static/images/exposure.png" width="480" caption="STIPS Single Exposure">
+	</a>
+</div>
+
+<p>
+	A single exposure may be added with a specified offset. Centring the offset on the detector 
+	V2/V3 position allows for parallel observations of the same scene with different instruments in 
+	their relative positions on the telescope V2/V3 plane.
+</p>
+
+<h3>Dither Pattern <span id="STIPSInterface-ObservationDitherPattern"></span></h3>
+
+<div class="center">
+	<a href="/static/images/dither.png">
+		<img src="/static/images/dither.png" width="480" caption="STIPS Dither Pattern">
+	</a>
+</div>
+<p>
+	Dither patterns are specific to particular instruments. Any known available dither pattern can be selected and, if chosen, will be added to the observation as a series of exposures, one for each point in the dither pattern.
+</p>
+
+{% endblock %}
+{% block afterword %}
+{% endblock %}

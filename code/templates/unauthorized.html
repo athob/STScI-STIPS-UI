@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Error - {{ message }}{% endblock %}
+
+{% block content %}
+<article>
+    <div class="error-message">
+        <h1>{{ message }}</h1>
+        <p>
+            {{ description|safe }} <br /><br />
+        </p>
+        <p>
+        In order to become authorized, please e-mail <a href="mailto:help@stsci.edu">help@stsci.edu</a> requesting access to
+        this STIPS server, and providing your reason for requesting access.
+        </p>
+    </div>
+    <p>
+        <a href="/">Back to index</a>
+    </p>
+</article>
+{% endblock %}

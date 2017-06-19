@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+<article>
+    <form action="/output/{{sim}}">
+        <button type="submit">Repeat Simulation</button>
+    </form>
+    <form action="/{{sim}}">
+        <button type="submit">Edit Simulation</button>
+    </form>
+	<hr />
+    <h1>Results for Simulation {{sim}}</h1>
+    <p>Full results (including FITS files) will be cached for a minimum of 7 days. After that, simulation parameters will be cached and visiting this URL will result in your simulation being re-computed.</p>
+	<p>Images shown below are for quick-look only. For analysis, please download the FITS file of the simulated result.</p>
+	<h1>Combined Zip File</h1>
+	<div class="indented">
+	<p><a href="{{web_path}}{{zip_name}}">{{zip_name}}</a></p>
+	</div>
+	{% if overall|length > 0 %}
+		<h1>Overall Mosaics:</h1>
+		{% for mosaic in overall %}
+			<div class="indented">
+			<h2>{{mosaic[0]}} Mosaic</h2>
+			<p><img src="{{web_path}}{{mosaic[2]}}" alt="{{mosaic[2]}}" width="800"/></p>
+			<p>File: <a href="{{web_path}}{{overall[1]}}">{{overall[1]}}</a></p>
+			<hr />
+			</div>
+		{% endfor %}
+		<hr />
+	{% endif %}
+	<h1>Input Catalogues:</h1>
+	<div class="indented">
+	{% for cat_name in catalogues %}
+		<p><a href="{{web_path}}{{cat_name}}">{{cat_name}}</a></p>
+	{% endfor %}
+	</div>
+	<hr />
+	<h1>Observations</h1>
+	<div class="indented">
+	{% for obset in observations %}
+		<h2>Observation Set {{loop.index}}</h2>
+		<div class="indented">
+		{% for mosaic in obset['mosaics'] %}
+			<h3>Quicklook Mosaic</h3>
+			<p><img src="{{web_path}}{{mosaic}}" alt="{{mosaic}}" width="800"/></p>
+			<p>Mosaic: <a href="{{web_path}}{{mosaic.replace('.png','.fits')}}">{{mosaic.replace('.png','.fits')}}</a></p>
+		{% endfor %}
+		</div>
+		<hr />
+		<div class="indented">
+		{% for obs in obset['observations'] %}
+			<h3>Observation {{obs['id']}}</h2>
+			<h3>Quicklook FITS Image:</h3>
+			{% if obs['mosaic_png']|length > 0 %}
+				{% for mosaic in obs['mosaic_png'] %}
+					<p><img src="{{web_path}}{{mosaic}}" alt="{{mosaic}}" width="800"/></p>
+				{% endfor %}
+			{% else %}
+				<p><img src="{{web_path}}{{obs['out_png']}}" alt="{{obs['out_png']}}" width="800"/></p>
+			{% endif %}
+			<h3>Quicklook PSF:</h3>
+			<p><img src="{{web_path}}{{obs['psf_png']}}" alt="{{obs['psf_png']}}" width="800"/></p>
+			<p>Output FITS file: <a href="{{web_path}}{{obs['out_fits']}}">{{obs['out_fits']}}</a></p>
+			<p>Output PSF file: <a href="{{web_path}}{{obs['psf_fits']}}">{{obs['psf_fits']}}</a></p>
+			<h3>Observed Catalogues:</h3>
+			<div class="indented">
+			{% for cat_name in obs['observed_names'] %}
+				<p><a href="{{web_path}}{{cat_name}}">{{cat_name}}</a></p>
+			{% endfor %}
+			</div>
+			<h3>Parameters</h3>
+			<ul>
+			{% for param in obs['parsedParam'] %}
+				<li>{{param}}</li>
+			{% endfor %}
+			</ul>
+		{% endfor %}
+		</div>
+	{% endfor %}
+	</div>
+	<hr />
+    <form action="/output/{{sim}}">
+        <button type="submit">Repeat Simulation</button>
+    </form>
+    <form action="/{{sim}}">
+        <button type="submit">Edit Simulation</button>
+    </form>
+</article>
+{% endblock %}

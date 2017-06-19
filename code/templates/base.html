@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>{%block fulltitle%}{% block title %}{% endblock %} - Space Telescope Imaging Product Simulator{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('.static', filename='style.css') }}" />
+    {% block additionalstyles %}{% endblock %}
+    {% block priorityscripts %}{% endblock %}
+</head>
+<body>
+    <div class="page">
+        <header>
+            <h1><a href="/docs/interface" target="_blank">STIPS {{telescope}} Web Interface</a></h1>
+        </header>
+        
+        <div class="content-container">
+        	<p>{{ instrument_intro | safe }}</p>
+            <form action="/">
+            	<button type="submit">Go to Start Page</button>
+            </form>
+            <form action="/docs" target="_blank">
+            	<button type="submit">Open Documentation</button>
+            </form>
+			<hr />
+            {% for message in get_flashed_messages() %}
+            <div class="flashed-messages">
+                <p class="flashed-message">{{ message }}</p>
+            </div>
+            {% endfor %}
+            
+            <div class="content">
+            {% block content %}{% endblock %}
+            </div>
+            <div class="content-end"></div>
+            <hr />
+            <form action="/">
+            	<button type="submit">Go to Start Page</button>
+            </form>
+            <form action="/docs" target="_blank">
+            	<button type="submit">Open Documentation</button>
+            </form>
+			<p>{{time}}<br/>Simulator version 1.0.0rc1, Last Updated 2017-06-09.<br/>&copy; Space Telescope Science Institute, Baltimore, MD<br/>For assistance, e-mail <a href="mailto:help@stsci.edu">help@stsci.edu</a></p>
+        </div>
+    </div>
+<script src="/static/jquery.js"></script>
+<script src="/static/bootstrap.min.js"></script>
+<script src="/static/sijax/sijax.js"></script>
+<script src="/static/sijax/sijax_upload.js"></script>
+{% block additionalscripts %}{% endblock %}
+</body>
+</html>

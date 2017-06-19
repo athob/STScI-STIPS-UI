@@ -1,0 +1,88 @@
+{% macro render_field(field) %}
+  <dt>{{ field.label }}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}
+
+{% macro render(field) %}
+  {% if field.type == 'BooleanField' %}
+  	{{ field(**kwargs)|safe }} {{ field.label }}
+  {% else %}
+	{{ field.label }} {{ field(**kwargs)|safe }}
+  {% endif %}
+{% endmacro %}
+
+{% macro render_errors(field) %}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_errors(field) %}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_fields() %}
+	{% for field in varargs %}
+	  {% if field.type == 'BooleanField' %}
+  		{{ field(**kwargs)|safe }} {{ field.label }}
+  	  {% elif field.type == 'SubmitField' %}
+  	  	{{ field(**kwargs)|safe }}
+	  {% else %}
+		{{ field.label }} {{ field(**kwargs)|safe }}
+	  {% endif %}
+	{% endfor %}
+	<br />
+	{% for field in varargs %}
+	  {% if field.errors %}
+    	<ul class=errors>
+	    {% for error in field.errors %}
+    	  <li>{{ error }}</li>
+	    {% endfor %}
+    	</ul>
+	  {% endif %}
+	{% endfor %}
+{% endmacro %}
+
+{% macro encapsulate(name,title,anchor="",display=True) %}
+{% if anchor != "" %}
+<h3><a href="/docs/interface/{{anchor}}" target="_blank">{{title}}</a></h3>
+{% else %}
+<h3>{{title}}</h3>
+{% endif %}
+{% if display %}
+	<div name="{{name}}" id="{{name}}" style="display: block;">
+	{{ caller() }}
+		<button type="button" data-toggle="section-visibility" id="{{name}}-hide">Hide {{title}}</button>
+	</div>
+	<div name="{{name}}-hidden" id="{{name}}-hidden" style="display: none;">
+		<button type="button" data-toggle="section-visibility" id="{{name}}-show">Show {{title}}</button>
+	</div>
+{% else %}
+	<div name="{{name}}" id="{{name}}" style="display: none;">
+	{{ caller() }}
+		<button type="button" data-toggle="section-visibility" id="{{name}}-hide">Hide {{title}}</button>
+	</div>
+	<div name="{{name}}-hidden" id="{{name}}-hidden" style="display: block;">
+		<button type="button" data-toggle="section-visibility" id="{{name}}-show">Show {{title}}</button>
+	</div>
+{% endif %}
+<hr />
+{% endmacro %}

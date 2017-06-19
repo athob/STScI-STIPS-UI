@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}STIPS Documentation{% endblock %}
+
+{% block additionalscripts %}
+<script>
+	{% if anchor != '' %}
+	$(function(){ window.location.hash = "{{anchor}}"; });
+	{% endif %}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="center">
+<h2>STIPS Documentation</h2>
+</div>
+
+<p>The following STIPS documentation pages are available:</p>
+<ul>
+	<li><a href="/docs/notes">STIPS Release Notes</a></li>
+	<li><a href="/docs/interface">STIPS Interface</a></li>
+	<li><a href="http://www.stsci.edu/wfirst/software/STIPS/catalogue_format">STIPS Catalogue Format</a></li>
+	<li><a href="/docs/implementation">STIPS Implementation</a></li>
+</ul>
+
+{% endblock %}
+{% block afterword %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}STIPS Roadmap and Development Priorities{% endblock %}
+
+{% block additionalscripts %}
+<script>
+	{% if anchor != '' %}
+	$(function(){ window.location.hash = "{{anchor}}"; });
+	{% endif %}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="center">
+<h2>STIPS Release Notes</h2>
+</div>
+
+<h3 id="STIPSReleaseNotes-V0_6_3">Version 0.6.3</h3>
+<p>June 21, 2016</p>
+<ul>
+	<li>Updated webbpsf to 0.5.0</li>
+	<li>Updated pandeia to 0.1.dev0</li>
+</ul>
+
+<h3 id="STIPSReleaseNotes-V0_6_2">Version 0.6.2</h3>
+<p>June 21, 2016</p>
+<ul>
+	<li>Fixed a bug where final co-ordinate values weren't renumbered to deal with oversampling or PSF buffer.</li>
+</ul>
+
+<h3 id="STIPSReleaseNotes-V0_6_1">Version 0.6.1</h3>
+<p>June 14, 2016</p>
+<ul>
+	<li>All internal IPAC tables now use lowercase column names</li>
+	<li>Fixed a bug where STIPS would crash if no binary stars were present in a chunk</li>
+	<li>Fixed a bug where conflicting variable names would limit star lists to 100,000 stars</li>
+	<li>Fixed a bug where tables larger than the chunk size could have variable column width</li>
+	<li>Made column format consistent in initial outputs.</li>
+</ul>
+
+<h3 id="STIPSReleaseNotes-V0_6_0">Version 0.6.0</h3>
+<p>May 18, 2016</p>
+<ul>
+	<li>Initial Public Version</li>
+</ul>
+
+{% endblock %}
+{% block afterword %}
+{% endblock %}

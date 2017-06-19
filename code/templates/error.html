@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Error - {{ message }}{% endblock %}
+
+{% block content %}
+<article>
+    <form action="/output/{{sim}}">
+        <button type="submit">Repeat Simulation</button>
+    </form>
+    <form action="/{{sim}}">
+        <button type="submit">Edit Simulation</button>
+    </form>
+	<hr />
+    <div class="error-message">
+        <h1>{{ message }}</h1>
+        <p>
+            {{ description|safe }} <br /><br />
+        </p>
+    </div>
+    <p>
+        <a href="/">Back to index</a>
+    </p>
+	<hr />
+    <form action="/output/{{sim}}">
+        <button type="submit">Repeat Simulation</button>
+    </form>
+    <form action="/{{sim}}">
+        <button type="submit">Edit Simulation</button>
+    </form>
+</article>
+{% endblock %}

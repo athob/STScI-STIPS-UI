@@ -1,0 +1,331 @@
+{% from "_formhelpers.html" import encapsulate,render,render_errors,render_fields %}
+
+{% extends "base.html" %}
+
+{% block title %}Create Simulation{% endblock %}
+
+{% block additionalscripts %}
+<script>
+	function edit_sim(sim)
+	{
+		window.location = "/" + sim;
+	}
+
+	function start_sim()
+	{
+    	var sim_value = $("#sim_value").html();
+    	window.location = "/output/" + sim_value;
+	}
+
+	function reset_page()
+	{
+		var current = location.href;
+		var go_to = current.substring(0,current.lastIndexOf("/")+1);
+		window.location.href = go_to;
+	}
+
+    function delete_item(item_type)
+    {
+    	var sim_value = $("#sim_value").html();
+        $.getJSON("/delete_form/" + sim_value + "/" + item_type,  
+            {}
+        ).done(function(data){       
+            location.reload();
+        }).fail(function(data,textstatus,xhr){
+            alert('fail = ' + data + ', textstatus ' + textstatus );    
+        });
+    }
+    
+    function edit_item(item_type)
+    {
+    	var sim_value = $("#sim_value").html();
+    	var items = item_type.split("-");
+        $.getJSON(  
+            "/get_form/" + sim_value + "/" + item_type,  
+            {}
+        ).done(function(data){
+    		$("#form_box_id").html(data);
+    		$("#add_item_form").modal('show');
+    		$("#sim_prefix").val($("#sim_value").html());
+    		sjxUpload.registerForm({"callback": "add_form_upload", "formId": "add_form"});
+        }).fail(function(data,textstatus,xhr){
+            alert('fail = ' + data + ', textstatus ' + textstatus );    
+        })
+        ;
+
+    }
+    
+    function create_item(item_type)
+    {
+    	var sim_value = $("#sim_value").html();
+    	$.getJSON(
+    		"/new_form/" + sim_value + "/" + item_type,
+    		{}
+    	).done(function(data){
+    		$("#form_box_id").html(data);
+    		$("#add_item_form").modal('show');
+    		$("#sim_prefix").val($("#sim_value").html());
+    		sjxUpload.registerForm({"callback": "add_form_upload", "formId": "add_form"});
+    		return false;
+    	});
+    }
+    
+    function error_text(error_strings)
+    {
+    	$("#form_status").html("<h2>Please Correct Errors in the Form</h2>");
+    	$("#form_submit_button").val("Save");
+    	var error_parts = error_strings.split(',');
+    	var num_errors = error_parts.length;
+    	var html_str = "<p><ul>";
+    	for (var i = 0; i < num_errors; i++) {
+    		html_str += "<li>" + error_parts + "</li>";
+    	}
+    	html_str += "</ul></p>";
+    	$("#form_errors").html(html_str);
+//		$("#form_errors").html(error_strings);
+    }
+
+	function update_status()
+	{
+		$("#form_status").html("<h2>Uploading...</h2>");
+		$("#form_submit_button").val("Uploading");
+		$("#form_submit_button").disabled = true;
+		$("#form_cancel_button").disabled = true;
+		window.setTimeout(reload_page, 1000);
+	}
+	function reload_page()
+	{
+		console.log("Testing for form completion...");
+    	var sim_value = $("#sim_value").html();
+        $.getJSON("/form?sim=" + sim_value, function(status) {
+        	console.log(status);
+        	console.log(status.ready);
+        	if (status && status.ready !== undefined && status.ready !== null && status.ready === true)  {
+        		console.log("Form is complete.")
+				$("#form_status").html("<h2>Done</h2>");
+				$("#form_submit_button").val("Done");
+				$("#add_item_form").modal("hide");
+				location.reload(true);
+			} else {
+				console.log("Form not yet complete")
+				window.setTimeout(reload_page, 1000);
+			}
+        }).error(function(error) {
+        	error_text("Form Status Query failed");
+        });
+	}
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="reset"><button onclick="reset_page();">Reset</button></div>
+<div id="submit_top"><button onclick="start_sim();">Start Simulation</button></div>
+<div id="sim_value" style="display: none;">{{ params['uid'] }}</div>
+<div id="prevsim">
+	<h3><a href="/docs/interface/STIPSInterface-RecallSimulation" target="_blank">
+	Previous Simulations
+	</a></h3>
+    <button onclick="create_item('previous')">Recall Previous Simulation</button>
+    <hr />
+</div>
+{% call encapsulate(name="user",title="User Information",anchor="STIPSInterface-UserInformation") %}
+	<p><b>E-mail Address:</b> {{ params['user']['email'] }}
+		{% if params['user']['save_user'] and params['user']['email'] != '' %}
+		 (saved)
+		{% endif %}
+		<br />
+	    <button data-toggle="modal" onclick="edit_item('user-{{params['user']['user_id']}}')">Edit</button>
+        <button data-toggle="modal" onclick="delete_item('user-{{params['user']['user_id']}}')">Clear</button>
+	</p>
+{% endcall %}
+{% call encapsulate(name="scene_general", title="General Scene Parameters", anchor="STIPSInterface-GeneralSceneParameters") %}
+	<p><b>Random Number Seed:</b> {{params['scene_general']['seed'] }}<br />
+		<b>Simulation Position:</b> (RA, DEC) = ({{ params['scene_general']['ra'] }}, {{ params['scene_general']['dec'] }})<br />
+	    <button data-toggle="modal" onclick="edit_item('scene_general-{{params['scene_general']['scene_general_id']}}')">Edit</button>
+        <button data-toggle="modal" onclick="delete_item('scene_general-{{params['scene_general']['scene_general_id']}}')">Clear</button>
+	</p>
+{% endcall %}
+{% call encapsulate(name="input",title="Input Files", anchor="STIPSInterface-InputFiles") %}
+	<div id="in_imgs">
+		{% for img in params['in_imgs'] %}
+			<div class="indented">
+				<p><b>Background Image {{ img['in_imgs_id'] }}</b></p>
+				<p><b>File:</b> {{ img['orig_filename'] }}[{{ img['ext']}}]<br />
+				<b>Scale:</b> {{ img['scale'] }} arcsec/pixel<br />
+				<b>Units:</b> {{ img['units'] }}<br />
+				<b>Modifiers:</b>
+				{% if img['wcs'] %}
+					Use Image WCS 
+				{% endif %}
+				{% if img['poisson'] %}
+					Add Poisson Noise
+				{% endif %}
+				<br />
+	    		<button data-toggle="modal" onclick="edit_item('in_imgs-{{img['in_imgs_id']}}')">Edit</button>
+        		<button data-toggle="modal" onclick="delete_item('in_imgs-{{img['in_imgs_id']}}')">Remove</button>
+        		</p>
+        	</div>
+        	<hr />
+		{% endfor %}
+        <button onclick="create_item('in_imgs')">Add Background Image</button>
+    </div>
+	<div id="in_cats">
+		{% for cat in params['in_cats'] %}
+			<div class="indented">
+				<p><b>Input Catalogue {{ cat['in_cats_id'] }}</b></p>
+				<p><b>File:</b> {{ cat['orig_filename'] }}<br />
+	    		<button data-toggle="modal" onclick="edit_item('in_cats-{{cat['in_cats_id']}}')">Edit</button>
+        		<button data-toggle="modal" onclick="delete_item('in_cats-{{cat['in_cats_id']}}')">Remove</button>
+        		</p>
+			</div>
+			<hr />
+		{% endfor %}
+        <button onclick="create_item('in_cats')">Add Input Catalogue</button>
+    </div>
+{% endcall %}
+{% call encapsulate(name="stellar",title="Stellar Populations", anchor="STIPSInterface-StellarPopulations") %}
+	<div id="stellar">
+		{% for pop in params['stellar'] %}
+			<div class="indented">
+				<p><b>Stellar Population {{ pop['stellar_id'] }}</b></p>
+				<p><b>Number of Stars:</b> {{ pop['n_stars'] }}<br />
+				   <b>Metallicity ([Fe/H]):</b> {{ pop['z_low'] }} &mdash; {{ pop['z_high'] }};
+				   <b>Age:</b> {{ "{:.2g}".format(pop['age_low']) }} &mdash; {{ "{:.2g}".format(pop['age_high']) }} yrs<br />
+				   <b>IMF:</b> {{ pop['imf'] }} with &alpha; = {{ pop['alpha'] }} and binary fraction {{ pop['binary_fraction'] }}<br />
+				   <b>Distribution:</b> {{ pop['distribution'] }} 
+				   {% if pop['clustered'] %}
+				   		with clustering
+				   {% endif %}
+				   with radius {{ pop['radius'] }} {{ pop['radius_units'] }} 
+				   and distance {{ pop['distance_low'] }} &mdash; {{ pop['distance_high'] }} kpc<br />
+				   <b>Location Offset:</b> (RA, DEC) = ({{ pop['offset_ra'] }}, {{ pop['offset_dec'] }}) arcseconds<br />
+	    		<button data-toggle="modal" onclick="edit_item('stellar-{{pop['stellar_id']}}')">Edit</button>
+        		<button data-toggle="modal" onclick="delete_item('stellar-{{pop['stellar_id']}}')">Remove</button>
+        		</p>
+			</div>
+			<hr />
+		{% endfor %}
+        <button onclick="create_item('stellar')">Add Stellar Population</button>
+    </div>
+{% endcall %}
+{% call encapsulate(name="galaxy",title="Galaxy Populations", anchor="STIPSInterface-GalaxyPopulations") %}
+	<div id="galaxy">
+		{% for pop in params['galaxy'] %}
+			<div class="indented">
+				<p><b>Galaxy Population {{ pop['galaxy_id'] }}</b></p>
+				<p><b>Number of Galaxies:</b> {{ pop['n_gals'] }}<br />
+				   <b>Redshift:</b> {{ pop['z_low'] }} &mdash; {{ pop['z_high'] }}; and
+				   <b>Half-light Radii:</b> {{ pop['rad_low'] }} &mdash; {{ pop['rad_high'] }} arcsec<br />
+				   <b>V-band Magnitude:</b> {{ pop['vmag_low'] }} &mdash; {{ pop['vmag_high'] }}<br />
+				   <b>Distribution:</b> {{ pop['distribution'] }} 
+				   {% if pop['clustered'] %}
+				   		with clustering
+				   {% endif %}
+				   with radius {{ pop['radius'] }} {{ pop['radius_units'] }}<br />
+				   <b>Location Offset:</b> (RA, DEC) = ({{ pop['offset_ra'] }}, {{ pop['offset_dec'] }}) arcseconds<br />
+	    		<button data-toggle="modal" onclick="edit_item('galaxy-{{pop['galaxy_id']}}')">Edit</button>
+        		<button data-toggle="modal" onclick="delete_item('galaxy-{{pop['galaxy_id']}}')">Remove</button>
+        		</p>
+			</div>
+			<hr />
+		{% endfor %}
+        <button onclick="create_item('galaxy')">Add Galaxy Population</button>
+    </div>
+{% endcall %}
+{% call encapsulate(name="observations",title="Observations", anchor="STIPSInterface-Observations") %}
+	<div id="observations">
+		{% for obs in params['observations'] %}
+			<div class="indented">
+				<p><b>Observation {{ obs['observations_id'] }}</b></p>
+				<p><b>Instrument:</b> {{ obs['instrument'] }}<br />
+				   {% if obs['detectors'] > 1 %}
+				   		<b>Detectors:</b> {{ obs['detectors'] }}<br />
+				   {% endif %}
+				   <b>Filters:</b>
+				   {% for filter in obs['filters'] %}
+				   		{% if loop.index != 1 %}
+				   		,
+				   		{% endif %}
+				   		{{ filter }} 
+				   {% endfor %}<br />
+				   {% if obs['distortion'] %}
+				   Includes Image Distortion<br />
+				   {% endif %}
+				   <b><a href="//confluence.stsci.edu/display/JWST/STIPS+Interface#STIPSInterface-ObservationSingleExposure" target="_blank">Exposure Offsets:</a></b><br />
+				   <div class="indented">
+				   	{% for offset in obs['offsets'] %}
+				   		<b>Exposure {{ offset['offset_id'] }}:</b> (RA, DEC) offset = 
+				   		({{ offset['offset_ra'] }}, {{ offset['offset_dec'] }}) arcseconds, PA = {{ offset['offset_pa'] }} degrees 
+				   					   {% if offset['offset_centre'] %}
+				   					    centred on detector V2,V3
+				   					   {% endif %}
+				   					   <br />
+			    		<button data-toggle="modal" onclick="edit_item('observations-{{obs['observations_id']}}-offset-{{offset['offset_id']}}')">Edit</button>
+			    		<button data-toggle="modal" onclick="delete_item('observations-{{obs['observations_id']}}-offset-{{offset['offset_id']}}')">Remove</button><br />
+				   	{% endfor %}
+				   	</div>
+			        <button onclick="create_item('observations-{{ obs['observations_id'] }}-offset')">Add Single Exposure</button>
+			        <button onclick="create_item('observations-{{ obs['observations_id'] }}-dither')">Add Dither Pattern</button><br />
+				   <b>Exposure Time:</b> {{ obs['exptime'] }} s; with {{ obs['coadd'] }} exposures co-added<br />
+				   <b>Background:</b> {{ obs['background'] }}<br />
+				   <b>Oversampling:</b> {{ obs['oversample'] }}<br />
+				   {% if obs['pupil_mask'] != '' %}
+					   <b>PSF Pupil Mask Commands:</b> {{ obs['pupil_mask'] }}<br />
+				   {% endif %}
+	    		<button data-toggle="modal" onclick="edit_item('observations-{{obs['observations_id']}}')">Edit</button>
+        		<button data-toggle="modal" onclick="delete_item('observations-{{obs['observations_id']}}')">Remove</button>
+        		</p>
+			</div>
+			<hr />
+		{% endfor %}
+		{% for instrument in instruments %}
+        <button onclick="create_item('{{instrument}}')">Add {{instrument}} Observation</button>
+		{% endfor %}
+        </p>
+    </div>
+{% endcall %}
+{% call encapsulate(name="residual",title="Error Residuals", anchor="STIPSInterface-Residuals") %}
+	<ul>
+	{% if params['residual']['flatfield'] %}
+		<li>Flatfield</li>
+	{% endif %}
+	{% if params['residual']['dark'] %}
+		<li>Dark Current</li>
+	{% endif %}
+	{% if params['residual']['cosmic'] %}
+		<li>Cosmic Rays</li>
+	{% endif %}
+	{% if not (params['residual']['flatfield'] or params['residual']['dark'] or params['residual']['cosmic']) %}
+		<li>None</li>
+	{% endif %}
+	</ul><br />
+	<button data-toggle="modal" onclick="edit_item('residual-1')">Edit</button>
+    <button data-toggle="modal" onclick="delete_item('residual-1')">Reset</button>
+	</p>
+{% endcall %}
+<div id="submit_bottom"><button onclick="start_sim();">Start Simulation</button></div>
+
+<div class="modal fade" id="add_item_form" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content" id="form_box_id">
+			<div class="modal-header">
+        		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        		<h2>Form</h2>
+        	</div>
+        	<div class="modal-body">
+        		<div class="container">
+	        		<form class="form-horizontal" action="" method="POST" id="add_form" enctype="multipart/form-data">
+					</form>
+				</div>
+			</div>
+			<div class="modal-footer">
+        		<button type="submit" class="btn btn-primary btn-success" id="add_save">Save</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+{% block afterword %}
+{% endblock %}

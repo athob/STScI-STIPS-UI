@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}STIPS Catalogue Format{% endblock %}
+
+{% block additionalscripts %}
+<script>
+	{% if anchor != '' %}
+	$(function(){ window.location.hash = "{{anchor}}"; });
+	{% endif %}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<h2 class="centre">Catalogue Format</h2>
+
+<p>
+	In general, STIPS expects catalogues to be formatted in the <a  
+	href="//irsa.ipac.caltech.edu/applications/DDGEN/Doc/ipac_tbl.html">IPAC table format</a>. 
+	This format was chosen both because columns may be given names, data types, and unit values; and 
+	because IPAC supports keyword/value metadata which allows STIPS to determine what type of 
+	catalogue it has been given. STIPS uses the <a href="//docs.astropy.org/en/stable/table/">astropy.table</a>
+	module to handle catalogue input and output. Note that, as of astropy 1.0, table metadata is not
+	necessarily preserved when writing an IPAC table, but the resulting text file may be edited, and 
+	keyword/value pairs may be added to it, after the table itself has been written.
+</p>
+<p>
+	STIPS currently understands six catalogue formats, named 'phoenix', 'bc95', 'internal', 'mixed', 
+	'multifilter', and 'generic'. The required metadata and columns are shown below.
+</p>
+
+<h3 id="CatalogueFormat-PhoenixCatalogue">Phoenix Catalogue</h3>
+
+<p>
+	A 'phoenix' catalogue is intended to include stars drawn from the <a href="//phoenix.ens-lyon.fr">phoenix simulator</a> 
+	(as translated into a grid by <a href="//ssb.stsci.edu/pysynphot/docs/appendixa.html#pysynphot-appendixa-phoenix">pysynphot</a>). 
+	A phoenix catalogue is a point-source catalogue which specifies each source by:
+</p>
+<ul>
+	<li>ID</li>
+	<li>Dataset (all sources within a dataset must have the same age and metallicity)</li>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>Age (years)</li>
+	<li>Metallicity ([Fe/H])</li>
+	<li>Distance (kpc)</li>
+	<li>Mass (solar masses)</li>
+	<li>Binary status (whether or not the source is a binary companion of the previous source)</li>
+</ul>
+<p>In order to identify the catalogue as a phoenix catalogue, the following metadata must be present:</p>
+<ul>
+	<li>type=phoenix</li>
+</ul>
+<p>
+	During the observation, this catalogue will be converted to an internal format, with any 
+	necessary additional metadata added at this point. Stellar count rates will be generated from 
+	the Phoenix grid.
+</p>
+
+<h3 id="CatalogueFormat-BC95Catalogue">BC95 Catalogue</h3>
+
+<p>
+	A 'bc95' catalogue is intended to include galaxies created from the <a href="//ssb.stsci.edu/pysynphot/docs/appendixa.html#pysynphot-appendixa-bc95">Bruzual and 
+	Charlot Isochrone Synthesis Spectral Evolutionary Code</a> (December 1995 version). A bc95 
+	catalogue is an extended-source catalogue, which specifies each source by:
+</p>
+<ul>
+	<li>ID</li>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>Redshift</li>
+	<li>
+		Model (one of 'a', 'b', 'c', 'd', or 'e', with the description of each model provided in the 
+		<a href="//www.stsci.edu/hst/observatory/crds/cdbs_bc95.html">BC95 README file</a>)
+	</li>
+	<li>
+		Age (one of &quot;10E5&quot;, &quot;25E5&quot;, &quot;50E5&quot;, &quot;76E5&quot;, 
+		&quot;10E6&quot;, &quot;25E6&quot;, &quot;50E6&quot;, &quot;10E7&quot;, &quot;50E7&quot;, 
+		&quot;10E8&quot;, &quot;50E8&quot;, &quot;10E9&quot;, years)
+	</li>
+	<li>Profile (one of 'expdisk' or 'devauc')</li>
+	<li>Radius (arcseconds)</li>
+	<li>Axial Ratio</li>
+	<li>PA (degrees)</li>
+	<li>Apparent Johnson V-band magnitude</li>
+</ul>
+<p>In order to identify the catalogue as a bc95 catalogue, the following metadata must be present:</p>
+<ul>
+	<li>type=bc95</li>
+</ul>
+<p>
+	During the observation, the catalogue will be converted into an internal format, with any 
+	necessary additional metadata added at this point. Galaxy spectra will be generated from the 
+	atlas, and count rates derived through pysynphot observation of the generated spectrum.
+</p>
+
+<h3 id="CatalogueFormat-InternalCatalogue">Internal Catalogue</h3>
+
+<p>
+	An 'internal' catalogue is intended to include either point or extended sources, but is limited 
+	to a single filter. It must contain the following columns:
+</p>
+<ul>
+	<li>ID</li>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>FLUX (count rate in the specified filter, counts/s)</li>
+	<li>TYPE (either 'point' or 'sersic')</li>
+	<li>N (sersic profile index if TYPE is 'sersic', otherwise ignored)</li>
+	<li>Re (half-light radius in pixels if TYPE is 'sersic', otherwise ignored)</li>
+	<li>Phi (angle of PA in degrees if TYPE is 'sersic', otherwise ignored)</li>
+	<li>Ratio (axial ratio if TYPE is 'sersic', otherwise ignored)</li>
+	<li>
+		Notes (any notes that are needed. Not used directly, but any notes <em>will</em> be retained 
+		in the observed catalogue produced during the observation.
+	</li>
+</ul>
+<p>
+	In order to identify the catalogue as an internal catalogue, and in order to use it for the 
+	observation, the following metadata must be present:
+</p>
+<ul>
+	<li>type=internal</li>
+	<li>filter=[filter to be observed]</li>
+</ul>
+<p>
+	This catalogue will not be converted during observation, except that the RA and DEC values 
+	will be converted into X and Y values, and point sources not falling on the detector will be 
+	discarded.
+</p>
+
+<h3 id="CatalogueFormat-MixedCatalogue">Mixed Catalogue</h3>
+
+<p>
+	A 'mixed' catalogue is identical to an internal catalogue, except that it contains one additional 
+	column:
+</p>
+<ul>
+	<li>Units (one of 'p' for photons/s, 'e' for electrons/s, 'j' for Jansky, or 'c' for counts/s.</li>
+</ul>
+<p>In order to identify the catalogue as a mixed catalogue, the following metadata must be present:</p>
+<ul>
+	<li>type=mixed</li>
+	<li>filter=[filter to be observed]</li>
+</ul>
+<p>This catalogue will have its flux values converted to counts/s, and will then be treated as an internal catalogue.</p>
+
+<h3 id="CatalogueFormat-MultifilterCatalogue">Multifilter Catalogue</h3>
+
+<p>
+	A 'multifilter' catalogue is identical to an internal catalogue, except that it does not have a filter 
+	specified in its metadata and, instead of having a Flux column, it has one or more columns, each named 
+	after an available filter, that indicate the source count rate in that filter. The appropriate filter's 
+	count rate will be renamed as 'flux' as the catalogue is converted to internal format. The 
+	'type=multifilter' metadata must be present.
+</p>
+
+<h3 id="CatalogueFormat-GenericCatalogue">Generic Catalogue</h3>
+
+<p>A 'generic' catalogue is a point-source catalogue with the following columns:</p>
+<ul>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>One column for each desired filter, showing the count rate in that filter.</li>
+	<li>(Optional) an ID column for each source.</li>
+</ul>
+<p>
+	No specific metadata is required, other than that, if this catalogue has a 'type' metadata field, it 
+	must not be equal to any of the above values.
+</p>
+
+{% endblock %}
+{% block afterword %}
+{% endblock %}

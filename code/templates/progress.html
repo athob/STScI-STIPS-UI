@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Processing{% endblock %}
+{% block additionalscripts %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script>
+    function poll_task() {
+        $.getJSON("poll?tid={{ task_id }}", function(data) {
+            if(data && data.ready !== undefined && data.ready !== null) {
+                if(data.progress !== undefined)
+                    $('#Progress').text(' (' + data.progress + ')');
+                    var working_status = data.working_status;
+                    var working_array = working_status.split(",");
+                    var working_html = '<span id="working_status">';
+                    for (var i = 0; i < working_array.length; i++) {
+                    	working_html += '<p class="indented">' + working_array[i] + '</p>';
+                    }
+                    working_html += '</span>';
+                    $('#working_status').replaceWith(working_html);
+                if(data.ready === true)
+                    window.location.replace("results?tid={{ task_id }}");
+            }
+            else
+                window.location.replace("/");
+            window.setTimeout(poll_task, 5000);
+        }).error(function(error) {
+            $('#Error').html(error.responseText);
+            $('#ErrorContainer').css('visibility', 'visible').fadeIn();
+            $('#ProgressContainer').hide();
+        });
+    }
+    
+    $(document).ready(function() {
+        window.setTimeout(poll_task, 500);
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<article>
+    <p>
+        <div id="ProgressContainer">
+            <span class="processing-text">Processing. <span id="Progress">Please wait.</span></span>
+            <img class="ajax-loader" src="{{ url_for('.static', filename='ajax-loader.gif') }}" alt="Pleast wait" width="16" height="16" />
+            <br/>
+            <span id="working_status"></span>
+            <span class="processing-text">If you entered your e-mail address in the form you can close this window, and you will be e-mailed a link to the completed simulation when it is finished.</span>
+            <br/>
+        </div>
+        <div id="ErrorContainer" class="error-message progress-error">
+            <h1>There was a problem</h1>
+            <div id="Error" class="error-text"></div>
+        </div>
+    </p>
+</article>
+{% endblock %}
