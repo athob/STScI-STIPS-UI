@@ -266,7 +266,7 @@
 				   	</div>
 			        <button onclick="create_item('observations-{{ obs['observations_id'] }}-offset')">Add Single Exposure</button>
 			        <button onclick="create_item('observations-{{ obs['observations_id'] }}-dither')">Add Dither Pattern</button><br />
-				   <b>Exposure Time:</b> {{ obs['exptime'] }} s; with {{ obs['coadd'] }} exposures co-added<br />
+				   <b>Exposure Time:</b> {{ obs['exptime'] }} s<br />
 				   <b>Background:</b> {{ obs['background'] }}<br />
 				   <b>Oversampling:</b> {{ obs['oversample'] }}<br />
 				   {% if obs['pupil_mask'] != '' %}
