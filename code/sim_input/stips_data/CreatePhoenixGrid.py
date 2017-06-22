@@ -2,8 +2,8 @@ import glob
 import os
 import time
 
-os.environ["PYSYN_CDBS"] = os.path.join(os.getcwd(), "cdbs")
-os.environ["pandeia_refdata"] = os.path.join(os.getcwd(), "pandeia_data")
+os.environ["PYSYN_CDBS"] = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs"))
+os.environ["pandeia_refdata"] = os.path.abspath(os.path.join(os.getcwd(), "..", "pandeia_data"))
 
 import numpy as np
 import pysynphot as ps
@@ -101,7 +101,7 @@ def get_pce(instrument, mode, filter, aperture, disperser):
     return wave,pce
 
 def get_grid_points():
-    grid_file = os.path.join(os.getcwd(), "cdbs", "grid", "phoenix", "catalog.fits")
+    grid_file = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs", "grid", "phoenix", "catalog.fits"))
     teff, Z, logg = np.array(()), np.array(()), np.array(())
     with pyfits.open(grid_file) as inf:
         indices = inf[1].data.field('INDEX')
@@ -137,6 +137,7 @@ for instrument in instruments:
             result_arrays[instrument][filter] = np.empty((len(coords[0]), len(coords[1]), len(coords[2]), len(coords[3])))
 print "Done\n"
 
+total = len(coords[0]) * len(coords[1]) * len(coords[2]) * len(coords[3])
 n = 0
 for i, Z in enumerate(coords[0]):
     print "{}: Starting Z = {}".format(time.ctime(), Z)
@@ -149,7 +150,7 @@ for i, Z in enumerate(coords[0]):
             if sum(spec.flux) > 0:
                 counts = True
             for l, mag in enumerate(coords[3]):
-                print "\t\t\t{}: Starting Z = {}, log(g) = {}, Teff = {}, Mabs = {:>4}".format(time.ctime(), Z, logg, teff, mag),
+                print "\t\t\t{} of {}: {}: Starting Z = {}, log(g) = {}, Teff = {}, Mabs = {:>4}".format(n+1, total, time.ctime(), Z, logg, teff, mag),
                 if counts:
                     spec_norm = spec.renorm(mag, 'vegamag', norm_bandpass)
                 for instrument in instruments:
