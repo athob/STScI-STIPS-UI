@@ -283,7 +283,6 @@ class ObservationForm(Form):
     detectors = NonValidatingSelectField("Detectors to Include")
     default = BooleanField(u"Include Centred Exposure", default=True)
     exptime = FloatField(u"Exposure Time",default=1000.0,validators=[validators.NumberRange(min=1.,max=10000.)])
-    coadd = IntegerField(u"Co-added Exposures",default=1,validators=[validators.NumberRange(min=1,max=10000)])
     filters = MultiCheckboxField(u"Filters")
     oversample = IntegerField(u"Oversample Image By",default=1,validators=[validators.NumberRange(min=1,max=20)])
     pupil_mask = TextField(u"PSF Pupil Mask",default="",validators=[validators.Optional()])

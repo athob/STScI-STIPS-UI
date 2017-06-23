@@ -352,7 +352,7 @@ def input(raw_sim=None):
             session['message'] = 'Simulation not found'
             session['description'] = 'Simulation %s not found' % (sim)
             flash("Simulation %s Not Found" % (sim))
-            return redirect(url_for('error', sim=sim))
+            return redirect(url_for('error', raw_sim=sim))
         with open(inf, 'rb') as f:
             params = cPickle.load(f)
         app.logger.info("User E-mail loaded as '{}'".format(params['user']['email']))
@@ -400,7 +400,7 @@ def output(raw_out_prefix):
         app.logger.error("Error: Simulation %s not found",out_prefix)
         session['message'] = 'Simulation not found'
         session['description'] = 'Simulation %s not found' % (out_prefix)
-        return redirect(url_for('error', sim=out_prefix))
+        return redirect(url_for('error', raw_sim=out_prefix))
     print("Opening Cache File")
     f = open(os.path.join(os.getcwd(),app.config['_CACHE_PATH'],out_prefix+"_scm.pickle"),'rb')
     params = cPickle.load(f)
@@ -615,7 +615,7 @@ def simulate_results():
             msg_subject = "Your STIPS simulation %s encountered an error" % (sim_id)
             msg_text = error_template.substitute(id=sim_id, error_message=error_message.replace("&nbsp;", " ").replace("<br />", "\n"))
             SendEmail(params['user']['email'], msg_subject, msg_text, [])
-        return redirect(url_for('error', sim=task_name))
+        return redirect(url_for('error', raw_sim=task_name))
     params = task.get()
     app.logger.info('Got back %s',str(params))
     app.logger.info('Rendering output page')
@@ -885,8 +885,8 @@ def page_not_found(e):
 @app.route('/error/')
 @app.route('/error/<raw_sim>')
 def error(raw_sim=None):
-    sim = raw_sim
-    if isinstance(raw_sim, str):
+    app.logger.info("Sim ID is {} (type {})".format(raw_sim, type(raw_sim)))
+    if isinstance(raw_sim, str) or isinstance(raw_sim, unicode):
         sim = asciify(raw_sim[:1000])
     else: #raw_sim is None
         sim = "None"
