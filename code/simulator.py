@@ -885,8 +885,8 @@ def page_not_found(e):
 @app.route('/error/')
 @app.route('/error/<raw_sim>')
 def error(raw_sim=None):
-    sim = raw_sim
-    if isinstance(raw_sim, str):
+    app.logger.info("Sim ID is {} (type {})".format(raw_sim, type(raw_sim)))
+    if isinstance(raw_sim, str) or isinstance(raw_sim, unicode):
         sim = asciify(raw_sim[:1000])
     else: #raw_sim is None
         sim = "None"
