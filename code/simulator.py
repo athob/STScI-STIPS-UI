@@ -39,7 +39,7 @@ except ImportError:
     found = False
 
 if not found:
-    sys.path.append(os.path.join(os.getcwd(), "stips"))
+    sys.path.append(os.path.join(os.getcwd(), "stips", "stips"))
 
 import DefaultSettings
 
