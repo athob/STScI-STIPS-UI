@@ -216,7 +216,7 @@
 				<p><b>Number of Galaxies:</b> {{ pop['n_gals'] }}<br />
 				   <b>Redshift:</b> {{ pop['z_low'] }} &mdash; {{ pop['z_high'] }}; and
 				   <b>Half-light Radii:</b> {{ pop['rad_low'] }} &mdash; {{ pop['rad_high'] }} arcsec<br />
-				   <b>Johnson,V Average Surface Brightness:</b> {{ pop['vmag_low'] }} &mdash; {{ pop['vmag_high'] }}<br />
+				   <b>Average Johnson V-band Surface Brightness within half-light radius:</b> {{ pop['sb_low'] }} &mdash; {{ pop['sb_high'] }}<br />
 				   <b>Distribution:</b> {{ pop['distribution'] }} 
 				   {% if pop['clustered'] %}
 				   		with clustering
