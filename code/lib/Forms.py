@@ -202,13 +202,8 @@ class GalaxyForm(BaseForm):
     z_high = FloatField(u"Redshift Upper Bound",default=0.,validators=[validators.NumberRange(min=0.,max=10.),GreaterThan('z_low')])
     rad_low = FloatField(u"Half-light Radius Lower Bound",default=0.01,validators=[validators.NumberRange(min=1.e-3,max=10.)])
     rad_high = FloatField(u"Half-light Radius Upper Bound",default=2.,validators=[validators.NumberRange(min=1.e-3,max=10.),GreaterThan('rad_low')])
-<<<<<<< HEAD
     vmag_low = FloatField(u"Apparent average surface brightness lower bound (Johnson,V)",default=30.,validators=[validators.NumberRange(min=15.,max=45.),GreaterThan('vmag_high')])
     vmag_high = FloatField(u"Apparent average surface brightness upper bound (Johnson,V)",default=20.,validators=[validators.NumberRange(min=15.,max=45.)])
-=======
-    sb_low = FloatField(u"Lower bound of average surface brightness within half-light radius (johnson,v)",default=30.,validators=[validators.NumberRange(min=15.,max=45.),GreaterThan('sb_high')])
-    sb_high = FloatField(u"Upper bound of average surface brightness within half-light radius (johnson,v)",default=30.,validators=[validators.NumberRange(min=15.,max=45.),LessThan('sb_low')])
->>>>>>> 6029daf6c51cbd437a06506d6a3fbd323e96f623
     distribution = SelectField(u"Distribution",default="uniform",choices=distribution_choices)
     clustered = BooleanField(u"Move Higher-mass Galaxies Closer to Centre",default=False)
     radius = FloatField(u"Radius",default=600.0)
