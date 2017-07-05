@@ -4,10 +4,10 @@
 
 {% block content %}
 <article>
-    <form action="/output/{{sim}}">
+    <form action="/repeat/{{sim}}">
         <button type="submit">Repeat Simulation</button>
     </form>
-    <form action="/{{sim}}">
+    <form action="/edit/{{sim}}">
         <button type="submit">Edit Simulation</button>
     </form>
 	<hr />
@@ -21,10 +21,10 @@
         <a href="/">Back to index</a>
     </p>
 	<hr />
-    <form action="/output/{{sim}}">
+    <form action="/repeat/{{sim}}">
         <button type="submit">Repeat Simulation</button>
     </form>
-    <form action="/{{sim}}">
+    <form action="/edit/{{sim}}">
         <button type="submit">Edit Simulation</button>
     </form>
 </article>

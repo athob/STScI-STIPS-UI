@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from werkzeug import secure_filename
-import cPickle, glob, json, logging, logging.config, os, re, shutil, sys, numpy, sqlite3, time, zipfile
+import cPickle, datetime, glob, json, logging, logging.config, os, re, shutil, sys, numpy, sqlite3, time, zipfile
 import montage_wrapper as montage
 import unicodedata
 
@@ -119,7 +119,8 @@ app.config['user_db'] = app.config.get('user_db', None)
 @celery.task(bind=True,ignore_results=False,name="tasks.start_sequence")
 def start_sequence(self,params):
     celery_logger.info("Params: {}".format(params))
-    self.update_state(state="STARTING_OBSERVATION_SEQUENCE")
+    self.update_state(state="STARTING OBSERVATION SEQUENCE")
+    params['start_time'] = datetime.datetime.now()
     out_prefix = params['out_prefix']
     task_files = glob.glob(os.path.join(params['out_path'],params['out_prefix']+'*'))
     found = False
@@ -137,11 +138,12 @@ def start_sequence(self,params):
 
 @celery.task(bind=True,ignore_result=False,name="tasks.create_catalogues")
 def create_catalogues(self,params):
-    self.update_state(state="CREATE_CATALOGUE_STARTED")
+    self.update_state(state="CREATE CATALOGUE STARTED")
     out_prefix = params['out_prefix']
     celery_logger.info("Creating catalogues for %s",out_prefix)
     sparams = params.copy()
     sparams['logger'] = celery_logger
+    sparams['celery'] = self
     sce = SceneModule(**sparams)
     celery_logger.info("Created Scene Module for %s",out_prefix)
     catalogues = []
@@ -149,11 +151,11 @@ def create_catalogues(self,params):
         catalogues.append(os.path.join(cat['file_path'], cat['current_filename']))
     celery_logger.info("Creating stars for %s",out_prefix)
     for i,pop in enumerate(params['stellar']):
-        self.update_state(state="CREATE_CATALOGUE_CREATING_STELLAR_POPULATION_%d_OF_%d"%(i+1,len(params['stellar'])))
+        self.update_state(state="CREATE CATALOGUE CREATING STELLAR POPULATION %d OF %d"%(i+1,len(params['stellar'])))
         celery_logger.info("Creating Population %d for %s",i+1,out_prefix)
         catalogues.append(sce.CreatePopulation(pop,i))
     for i,gal in enumerate(params['galaxy']):
-        self.update_state(state="CREATE_CATALOGUE_CREATING_GALAXY_POPULATION_%d_OF_%d"%(i+1,len(params['galaxy'])))
+        self.update_state(state="CREATE CATALOGUE CREATING GALAXY POPULATION %d OF %d"%(i+1,len(params['galaxy'])))
         celery_logger.info("Creating Galaxies %d for %s",i+1,out_prefix)
         catalogues.append(sce.CreateGalaxies(gal,i))
     params['catalogues'] = catalogues
@@ -162,10 +164,18 @@ def create_catalogues(self,params):
 
 @celery.task(bind=True,ignore_result=False,name="tasks.observation")
 def observation(self,params,observation):
-    self.update_state(state="OBSERVATION_STARTED")
+    self.update_state(state="OBSERVATION STARTED")
+    task_id = self.request.id
+    def get_task_state():
+        result = celery.AsyncResult(id=task_id)
+        return result.state
+    def set_task_state(state):
+        self.update_state(state=state)
     out_prefix = params['out_prefix']
     sparams = params.copy()
     sparams['logger'] = celery_logger
+    sparams['get_celery'] = get_task_state
+    sparams['set_celery'] = set_task_state
     obs_num = int(observation['observations_id'])
     celery_logger.info("Running observation {} for simulation {}".format(obs_num, out_prefix))
     celery_logger.info("Observation Offsets are {}".format(observation['offsets']))
@@ -179,14 +189,14 @@ def observation(self,params,observation):
         observed_catalogues = []
         obs_out = {}
         for i,img in enumerate(params['in_imgs']):
-            self.update_state(state="OBSERVATION_%d_(PART_%d_of_%d)_ADDING_BACKGROUND_%d_OF_%d" % (obs_num,current_obs+1,n_obs,i+1,len(params['in_imgs'])))
+            self.update_state(state="OBSERVATION %d (PART %d of %d) ADDING BACKGROUND %d OF %d" % (obs_num,current_obs+1,n_obs,i+1,len(params['in_imgs'])))
             obs.addImage(img['current_filename'],img['units'])
         for i,cat in enumerate(params['catalogues']):
             (catpath,catname) = os.path.split(cat)
             self.update_state(state="OBSERVATION_%d_(PART_%d_of_%d)_OBSERVING_CATALOGUE_%s_(%d_OF_%d)" % (obs_num,current_obs+1,n_obs,catname,i+1,len(params['catalogues'])))
             celery_logger.info("Imaging Catalogue %s for %s",catname,out_prefix)
             observed_catalogues.extend(obs.addCatalogue(cat))
-        self.update_state(state="OBSERVATION_%d_(PART_%d_of_%d)_ADDING_ERROR" % (obs_num,current_obs+1,n_obs))
+        self.update_state(state="OBSERVATION %d (PART %d of %d) ADDING ERROR" % (obs_num,current_obs+1,n_obs))
         psf_fits = obs.addError()
         out_fits,mosaic_fits,parsed_params = obs.finalize()
         celery_logger.info("Generating Quicklook Images for %s",out_fits)
@@ -218,7 +228,7 @@ def finalize(self,params):
     params['overall_pngs'] = []
     for i, obset in enumerate(params['observations_out']):
         if len(obset) > 1:
-            self.update_state(state="FINALIZE_MAKING_MOSAIC_OBS_{}_OF_{}".format(i+1, len(params['observations_out'])))
+            self.update_state(state="FINALIZE MAKING MOSAIC OBS {} OF {}".format(i+1, len(params['observations_out'])))
             celery_logger.info("Making Full output mosaic for observation {}".format(i+1))
             out_obs = {}
             for obs in obset['observations']:
@@ -253,7 +263,7 @@ def finalize(self,params):
                 filter = fname_items[2]
                 Fits2Png(obset['mosaics'][i], obset['pngs'][i],
                          pngTitle=params['out_prefix']+' %s Quicklook'%(filter),cbarLabel='electrons',scale='log')
-    self.update_state(state="FINALIZE_MAKING_ZIP_FILE")
+    self.update_state(state="FINALIZE MAKING ZIP FILE")
     os.chdir(params['out_path'])
     infiles = []
     with zipfile.ZipFile(params['out_prefix']+'.zip','w',allowZip64=True) as myzip:
@@ -289,7 +299,7 @@ def finalize(self,params):
                     infiles.append(mosaicname)
     os.chdir(current_dir)
     if params['user']['email'] is not None:
-        self.update_state(state="FINALIZE_CREATING_FINISHED_EMAIL")
+        self.update_state(state="FINALIZE CREATING FINISHED EMAIL")
         subject = "Your STIPS simulation {} has completed".format(params['out_prefix'])
         msg_to = params['user']['email']
         catalogue_names = [os.path.split(c)[1] for c in params['catalogues']]
@@ -315,7 +325,8 @@ def finalize(self,params):
         msg_text = done_email.substitute(final_page=params['final_page'], zip=params['static_page']+params['out_prefix']+'.zip',
                                          inputs=input_cats, mosaics=input_mosaics, observations=obs_str)
         SendEmail(msg_to, subject, msg_text, out_files)
-    self.update_state(state='FINISHED_OBSERVATIONS')
+    self.update_state(state='FINISHED OBSERVATIONS')
+    params['stop_time'] = datetime.datetime.now()
     f = open(os.path.join(params['out_path'],params['out_prefix']+'_final.pickle'),'wb')
     cPickle.dump(params,f)
     f.close()
@@ -382,31 +393,79 @@ def input(raw_sim=None):
             resp.set_cookie('user_email', '', expires=0)
     return resp
 
-@app.route('/output/<raw_out_prefix>')
-def output(raw_out_prefix):
-    print("Raw Prefix is {}".format(raw_out_prefix[:1000]))
-    out_prefix = asciify(raw_out_prefix[:1000])
-    print("Adjusted Prefix is {}".format(out_prefix))
+@app.route('/repeat/<raw_sim>')
+def repeat(raw_sim):
+    sim = asciify(raw_sim[:1000])
+    uid = RandomPrefix()
     if not check_authorized(request.headers, app.config):
         app.logger.error("Unauthorized User {}".format(request.headers.get("remote-user")))
         session['message'] = "User {} is unauthorized".format(request.headers.get('remote-user'))
         session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
         return redirect(url_for("unauthorized"))
-    print("Starting output for prefix {}".format(out_prefix))
-    app.logger.info('Starting Output with unique ID %s',out_prefix)
-    # Output names
-    if not os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH'],out_prefix+"_scm.pickle")):
+    cache_file = os.path.join(os.getcwd(),app.config['_CACHE_PATH'],sim+"_scm.pickle")
+    if not os.path.exists(cache_file):
         print("CACHE FILE NOT FOUND!!!!!")
-        app.logger.error("Error: Simulation %s not found",out_prefix)
+        app.logger.error("Error: Simulation %s not found",sim)
         session['message'] = 'Simulation not found'
-        session['description'] = 'Simulation %s not found' % (out_prefix)
-        return redirect(url_for('error', raw_sim=out_prefix))
+        session['description'] = 'Simulation %s not found' % (sim)
+        return redirect(url_for('error', raw_sim=sim))
+    with open(cache_file, 'rb') as f:
+        params = cPickle.load(f)
+        params['uid'] = uid
+        params['active_form'] = False
+        with open(os.path.join(os.getcwd(), app.config['_CACHE_PATH'], uid+"_scm.pickle"), "wb") as outf:
+            cPickle.dump(params, outf)
+    return redirect(url_for('output', raw_sim=uid))        
+
+@app.route('/edit/<raw_sim>')
+def edit(raw_sim):
+    sim = asciify(raw_sim[:1000])
+    uid = RandomPrefix()
+    if not check_authorized(request.headers, app.config):
+        app.logger.error("Unauthorized User {}".format(request.headers.get("remote-user")))
+        session['message'] = "User {} is unauthorized".format(request.headers.get('remote-user'))
+        session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
+        return redirect(url_for("unauthorized"))
+    cache_file = os.path.join(os.getcwd(),app.config['_CACHE_PATH'],sim+"_scm.pickle")
+    if not os.path.exists(cache_file):
+        print("CACHE FILE NOT FOUND!!!!!")
+        app.logger.error("Error: Simulation %s not found",sim)
+        session['message'] = 'Simulation not found'
+        session['description'] = 'Simulation %s not found' % (sim)
+        return redirect(url_for('error', raw_sim=sim))
+    with open(cache_file, 'rb') as f:
+        params = cPickle.load(f)
+        params['uid'] = uid
+        params['active_form'] = False
+        with open(os.path.join(os.getcwd(), app.config['_CACHE_PATH'], uid+"_scm.pickle"), "wb") as outf:
+            cPickle.dump(params, outf)
+    return redirect(url_for('input', raw_sim=uid))        
+
+@app.route('/output/<raw_sim>')
+def output(raw_sim):
+    print("Raw Prefix is {}".format(raw_sim[:1000]))
+    sim = asciify(raw_sim[:1000])
+    print("Adjusted Prefix is {}".format(sim))
+    if not check_authorized(request.headers, app.config):
+        app.logger.error("Unauthorized User {}".format(request.headers.get("remote-user")))
+        session['message'] = "User {} is unauthorized".format(request.headers.get('remote-user'))
+        session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
+        return redirect(url_for("unauthorized"))
+    print("Starting output for prefix {}".format(sim))
+    app.logger.info('Starting Output with unique ID %s',sim)
+    # Output names
+    if not os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH'],sim+"_scm.pickle")):
+        print("CACHE FILE NOT FOUND!!!!!")
+        app.logger.error("Error: Simulation %s not found",sim)
+        session['message'] = 'Simulation not found'
+        session['description'] = 'Simulation %s not found' % (sim)
+        return redirect(url_for('error', raw_sim=sim))
     print("Opening Cache File")
-    f = open(os.path.join(os.getcwd(),app.config['_CACHE_PATH'],out_prefix+"_scm.pickle"),'rb')
+    f = open(os.path.join(os.getcwd(),app.config['_CACHE_PATH'],sim+"_scm.pickle"),'rb')
     params = cPickle.load(f)
     f.close()
     print("Loaded Parameter file")
-    params['out_prefix'] = out_prefix
+    params['out_prefix'] = sim
     params['in_path'] = os.path.join(os.getcwd(),app.config['_INP_PATH'])
     params['out_path'] = os.path.join(os.getcwd(),app.config['_OUT_PATH'])
     params['version'] = app.config['_VERSION']
@@ -414,11 +473,11 @@ def output(raw_out_prefix):
     if 'proxy' in app.config:
         print("Setting parameters for proxy")
         params['progress_page'] = app.config['proxy'] + url_for('progress')
-        params['final_page'] = app.config['proxy'] + url_for('final',raw_out_prefix=out_prefix)
+        params['final_page'] = app.config['proxy'] + url_for('final',raw_sim=sim)
         params['static_page'] = app.config['proxy'] + url_for('static',filename='sim_temp/')
     else:
         print("Setting parameters without proxy")
-        params['final_page'] = url_for('final',raw_out_prefix=out_prefix,_external=True)
+        params['final_page'] = url_for('final',raw_sim=sim,_external=True)
         params['static_page'] = url_for('static',filename='sim_temp/',_external=True)
         params['progress_page'] = url_for('progress')
     print("Creating Task IDs")
@@ -441,21 +500,22 @@ def output(raw_out_prefix):
     print("Wrote Task File")
     return redirect('/progress?tid=' + task_file)
 
-@app.route('/final/<raw_out_prefix>')
-def final(raw_out_prefix):
-    out_prefix = asciify(raw_out_prefix[:1000])
+@app.route('/final/<raw_sim>')
+def final(raw_sim):
+    sim = asciify(raw_sim[:1000])
     if not check_authorized(request.headers, app.config):
         app.logger.error("Unauthorized User {}".format(request.headers.get("remote-user")))
         session['message'] = "User {} is unauthorized".format(request.headers.get('remote-user'))
         session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
         return redirect(url_for("unauthorized"))
-    app.logger.info('Starting Final with unique ID %s',out_prefix)
-    app.logger.info('Looking for %s',os.path.join(os.getcwd(),app.config['_OUT_PATH'],out_prefix+'_final.pickle'))
-    if os.path.exists(os.path.join(os.getcwd(),app.config['_OUT_PATH'],out_prefix+'_final.pickle')):
-        app.logger.info('Returning result %s',out_prefix)
-        f = open(os.path.join(os.getcwd(),app.config['_OUT_PATH'],out_prefix+'_final.pickle'),'rb')
+    app.logger.info('Starting Final with unique ID %s',sim)
+    app.logger.info('Looking for %s',os.path.join(os.getcwd(),app.config['_OUT_PATH'],sim+'_final.pickle'))
+    if os.path.exists(os.path.join(os.getcwd(),app.config['_OUT_PATH'],sim+'_final.pickle')):
+        app.logger.info('Returning result %s',sim)
+        f = open(os.path.join(os.getcwd(),app.config['_OUT_PATH'],sim+'_final.pickle'),'rb')
         params = cPickle.load(f)
         f.close()
+        runtime = params['stop_time'] - params['start_time']
         input_names = [os.path.split(cat)[1] for cat in params['catalogues']]
         obs = []
         for obset in params['observations_out']:
@@ -477,16 +537,14 @@ def final(raw_out_prefix):
                 o_s['observations'].append(o)
             o_s['mosaics'] = [os.path.split(fname)[1].replace('.fits', '.png') for fname in obset['mosaics']]
             obs.append(o_s)
-        return render_template('output.html',time=time.ctime(),version=params['version'],
-                                title=params['out_prefix']+" Results",catalogues=input_names,observations=obs,
-                                web_path=url_for('static',filename='sim_temp/'),
-                                zip_name=params['out_prefix']+'.zip', telescope=telescope,
-                                instrument_intro=instrument_intro,sim=out_prefix)
-    elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+out_prefix+'_scm.pickle')):
-        return redirect(url_for('output',raw_out_prefix=out_prefix))
+        return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
+                               observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
+                               telescope=telescope, instrument_intro=instrument_intro, sim=sim)
+    elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
+        return redirect(url_for('output',raw_sim=sim))
     else:
-        app.logger.info('Result %s not found',out_prefix)
-        return render_template('not_found.html',time=time.ctime(),version=params['version'],id=out_prefix,
+        app.logger.info('Result %s not found',sim)
+        return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
                                telescope=telescope, instrument_intro=instrument_intro)
 
 @app.route('/docs/<raw_page>/<raw_anchor>')
@@ -569,7 +627,7 @@ def simulate_poll():
                 return jsonify(ready=True,progress=progress,working_status=working_status)
             else: #working
                 num_working += 1
-                working_status.append(task.status.replace("_"," "))
+                working_status.append(task.status)
         progress = "%d of %d complete, %d working." % (num_ready,num_tasks,num_working)
         working_status = ",".join(working_status)
         app.logger.info(status_string)
@@ -619,7 +677,7 @@ def simulate_results():
     params = task.get()
     app.logger.info('Got back %s',str(params))
     app.logger.info('Rendering output page')
-    return redirect(url_for('final',raw_out_prefix=params['out_prefix']))
+    return redirect(url_for('final',raw_sim=params['out_prefix']))
 
 def dither_offsets(dither_pattern):
     ins = instruments[dither_pattern['instrument']]
