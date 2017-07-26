@@ -30,6 +30,7 @@ os.environ['pandeia_refdata'] = os.path.join(os.getcwd(), "sim_input", "pandeia_
 os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input", "stips_data")
 
 sys.path.append(os.path.join(os.getcwd(),"lib"))
+sys.path.append(os.path.join(os.getcwd(), "sim_input", "modules"))
 
 import imp
 try:
@@ -43,13 +44,13 @@ if not found:
 
 import DefaultSettings
 
-from stips.utilities import InstrumentList
-from stips.scene_module import SceneModule
-from stips.observation_module import ObservationModule
-
 from Forms import *
 from Templates import *
 from Utilities import *
+
+from stips.utilities import InstrumentList
+from stips.scene_module import SceneModule
+from stips.observation_module import ObservationModule
 
 app = Flask(__name__)
 app.config['DEBUG'] = __name__ == '__main__'
@@ -515,6 +516,10 @@ def final(raw_sim):
         f = open(os.path.join(os.getcwd(),app.config['_OUT_PATH'],sim+'_final.pickle'),'rb')
         params = cPickle.load(f)
         f.close()
+#         print(params['stop_time'], type(params['stop_time']))
+#         print(params['start_time'], type(params['start_time']))
+#         (u'2017-07-26T13:15:50.373083', <type 'unicode'>)
+        params['start_time'] = datetime.datetime.strptime(params['start_time'], '%Y-%m-%dT%H:%M:%S.%f')
         runtime = params['stop_time'] - params['start_time']
         input_names = [os.path.split(cat)[1] for cat in params['catalogues']]
         obs = []

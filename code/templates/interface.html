@@ -12,6 +12,32 @@
 
 {% block content %}
 
+<h3>Table of Contents</h3>
+<ul>
+	<li><a href="#STIPSInterface-Main">Overall Interface</a></li>
+		<ul>
+			<li><a href="#STIPSInterface-ResetSimulation">Reset Simulation</a></li>
+			<li><a href="#STIPSInterface-RecallSimulation">Recall Simulation</a></li>
+			<li><a href="#STIPSInterface-UserInformation">User Information</a></li>
+			<li><a href="#STIPSInterface-GeneralSceneParameters">General Scene Parameters</a></li>
+			<li><a href="#STIPSInterface-InputFiles">Input Files</a></li>
+			<li><a href="#STIPSInterface-Residuals">Residual Errors</a></li>
+		</ul>
+		</li>
+	<li><a href="#STIPSInterface-SceneParameters">Scene Parameters</a></li>
+		<ul>
+			<li><a href="#STIPSInterface-StellarPopulations">Stellar Populations</a></li>
+			<li><a href="#STIPSInterface-GalaxyPopulations">Galaxy Populations</a></li>
+		</ul>
+		</li>
+	<li><a href="#STIPSInterface-Observations">Observation Parameters</a></li>
+		<ul>
+			<li><a href="#STIPSInterface-ObservationSingleExposure">Single Exposure</a></li>
+			<li><a href="#STIPSInterface-ObservationDitherPattern">Dither Pattern</a></li>
+		</ul>
+		</li>
+</ul>
+
 <div class="center">
 <h2>Main Interface</h3>
 </div>
@@ -20,6 +46,7 @@
 	<a href="/static/images/main.png" target="_blank">
 		<img width="480" src="/static/images/main.png" caption="STIPS Main Interface Screenshot">
 	</a>
+	<span id="STIPSInterface-Main"></span>
 </div>
 <p>
 	The STIPS main page shows a summary of the current simulation, and allows parts of the 
@@ -27,8 +54,8 @@
 </p>
 <ul>
 	<li>
-		<strong>Reset Simulation</strong> button: This loads a new, blank simulation (with a new 
-		simulation ID).
+		<strong>Reset Simulation <span id="STIPSInterface-ResetSimulation"></span></strong> button: 
+		This loads a new, blank simulation (with a new simulation ID).
 	</li>
 	<li>
 		<strong>Recall Previous Simulation <span id="STIPSInterface-RecallSimulation"></span>

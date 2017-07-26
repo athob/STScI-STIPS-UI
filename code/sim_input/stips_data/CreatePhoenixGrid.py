@@ -1,13 +1,16 @@
 import glob
 import os
+import sys
 import time
 
 os.environ["PYSYN_CDBS"] = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs"))
-os.environ["pandeia_refdata"] = os.path.abspath(os.path.join(os.getcwd(), "..", "pandeia_data"))
+os.environ["pandeia_refdata_path"] = os.path.abspath(os.path.join(os.getcwd(), "..", "pandeia_data"))
+
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..", "modules"))
 
 import numpy as np
 import pysynphot as ps
-from pandeia.engine.instrument_factory import InstrumentFactory
+from stips.utilities import InstrumentList
 from astropy.io import fits as pyfits
 
 COMPFILES =  sorted(glob.glob(os.path.join(os.environ["PYSYN_CDBS"],"mtab","*tmc.fits")))
@@ -118,22 +121,17 @@ print coords
 bandpasses = {}
 result_arrays = {}
 
+instruments = InstrumentList()
 print "{}: Making Bandpasses...".format(time.ctime())
 for instrument in instruments:
+    my_instrument = instruments[instrument]()
     bandpasses[instrument] = {}
     result_arrays[instrument] = {}
     for mode in modes[instrument]:
         for filter in filters[instrument][mode]:
             print "\t{}: {},{},{},{}".format(time.ctime(), instrument, mode, filter, apertures[instrument][mode])
-            if instrument == "wfc3":
-                obsmode = "wfc3,ir,{}".format(filter)
-                ps.setref(**wfc3_refs)
-                bandpasses[instrument][filter] = ps.ObsBandpass(obsmode)
-            else:
-                wave, pce = get_pce(instrument, mode, filter, apertures[instrument][mode], None)
-                bandpasses[instrument][filter] = ps.ArrayBandpass(wave=wave*1.e4, throughput=pce,
-                                                                  waveunits='angstroms',
-                                                                  name="bp_{}_{}".format(instrument, filter))
+            my_instrument.reset(0., 0., 0., filter.upper())
+            bandpasses[instrument][filter] = my_instrument.bandpass
             result_arrays[instrument][filter] = np.empty((len(coords[0]), len(coords[1]), len(coords[2]), len(coords[3])))
 print "Done\n"
 
