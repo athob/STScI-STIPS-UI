@@ -519,8 +519,11 @@ def final(raw_sim):
 #         print(params['stop_time'], type(params['stop_time']))
 #         print(params['start_time'], type(params['start_time']))
 #         (u'2017-07-26T13:15:50.373083', <type 'unicode'>)
-        params['start_time'] = datetime.datetime.strptime(params['start_time'], '%Y-%m-%dT%H:%M:%S.%f')
-        runtime = params['stop_time'] - params['start_time']
+        try:
+            runtime = params['stop_time'] - params['start_time']
+        except TypeError as e:
+            params['start_time'] = datetime.datetime.strptime(params['start_time'], '%Y-%m-%dT%H:%M:%S.%f')
+            runtime = params['stop_time'] - params['start_time']
         input_names = [os.path.split(cat)[1] for cat in params['catalogues']]
         obs = []
         for obset in params['observations_out']:
