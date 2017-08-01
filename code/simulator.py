@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from werkzeug import secure_filename
-import cPickle, datetime, glob, json, logging, logging.config, os, re, shutil, sys, numpy, sqlite3, time, zipfile
+import cPickle, datetime, git, glob, json, logging, logging.config, os, re, shutil, sys, numpy, sqlite3, time, zipfile
 import montage_wrapper as montage
 import unicodedata
 
@@ -32,6 +32,16 @@ os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input", "stips_data")
 sys.path.append(os.path.join(os.getcwd(),"lib"))
 sys.path.append(os.path.join(os.getcwd(), "sim_input", "modules"))
 
+repo = git.Repo(os.path.abspath(os.path.join(os.getcwd(), "..")))
+tree = repo.tree()
+committed_date = 0
+for blob in tree:
+    commit = repo.iter_commits(paths=blob.path, max_count=1).next()
+    if commit.committed_date > committed_date:
+        committed_date = commit.committed_date
+server_mod_time = datetime.datetime.fromtimestamp(committed_date)
+print("Server Mod Time: {}".format(server_mod_time))
+
 import imp
 try:
     imp.find_module('stips')
@@ -48,9 +58,28 @@ from Forms import *
 from Templates import *
 from Utilities import *
 
+import stips
 from stips.utilities import InstrumentList
 from stips.scene_module import SceneModule
 from stips.observation_module import ObservationModule
+
+stips_version = stips.__version__
+
+repo = git.Repo(os.path.split(os.path.split(os.path.split(stips.__file__)[0])[0])[0])
+tree = repo.tree()
+committed_date = 0
+for blob in tree:
+    commit = repo.iter_commits(paths=blob.path, max_count=1).next()
+    if commit.committed_date > committed_date:
+        committed_date = commit.committed_date
+stips_mod_time = datetime.datetime.fromtimestamp(committed_date)
+print("STIPS Mod Time: {}".format(stips_mod_time))
+print("STIPS Version: {}".format(stips_version))
+
+pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
+with open(pandeia_version_file, 'r') as inf:
+    pandeia_version_info = inf.readline().strip()
+print("Pandeia Version: {}".format(pandeia_version_info))
 
 app = Flask(__name__)
 app.config['DEBUG'] = __name__ == '__main__'
@@ -384,7 +413,9 @@ def input(raw_sim=None):
         print("Initial simulation parameters created")
         return redirect(url_for('input', raw_sim=uid))
     resp = make_response(render_template('input.html', params=params, instruments=INSTRUMENTS,
-                                         telescope=telescope, instrument_intro=instrument_intro))
+                                         telescope=telescope, instrument_intro=instrument_intro, 
+                                         server_mod_time=server_mod_time, stips_version=stips_version, 
+                                         stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info))
     if params['user']['update_user'] == 'yes':
         if params['user']['save_user']:
             app.logger.info("Setting USER ID cookie to {}".format(params['user']['email']))
@@ -547,13 +578,16 @@ def final(raw_sim):
             obs.append(o_s)
         return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
-                               telescope=telescope, instrument_intro=instrument_intro, sim=sim)
+                               telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
     else:
         app.logger.info('Result %s not found',sim)
         return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
-                               telescope=telescope, instrument_intro=instrument_intro)
+                               telescope=telescope, instrument_intro=instrument_intro, 
+                               server_mod_time=server_mod_time, stips_version=stips_version, 
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
 
 @app.route('/docs/<raw_page>/<raw_anchor>')
 @app.route('/docs/<raw_page>')
@@ -575,8 +609,9 @@ def docs(raw_page='main', raw_anchor=''):
         doc_template = "implementation.html"
     elif "notes" in page:
         doc_template = "notes.html"
-    return render_template(doc_template, anchor=anchor, time=time.ctime(), 
-                           version=app.config['_VERSION'], telescope=telescope, instrument_intro=instrument_intro)
+    return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
+                           telescope=telescope, instrument_intro=instrument_intro, server_mod_time=server_mod_time, 
+                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
 
 @app.route('/progress')
 def progress():
@@ -588,7 +623,8 @@ def progress():
         return redirect(url_for("unauthorized"))
     task_id = asciify(request.args.get('tid', '')[:1000])
     return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, task_id=task_id, time=time.ctime(),
-                           version=app.config['_VERSION']) if task_id else redirect('/')
+                           version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info) if task_id else redirect('/')
 
 @app.route("/form")
 def simulate_form():
@@ -938,7 +974,8 @@ def handle_form_upload(obj_response, files, form_values):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message='Not Found', 
-                           description='The requested URL was not found on the server.'), 404
+                           description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info), 404
 
 @app.errorhandler(ConnectionError)
 def page_not_found(e):
@@ -946,7 +983,8 @@ def page_not_found(e):
     production_description = "both <strong>redis-server</strong> and <strong>worker.py</strong> are"
     description = "Check to make sure that %s running." % (debug_description if app.debug else production_description)
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro,
-                           message='Coult not connect to the task queue', description=description), 500
+                           message='Coult not connect to the task queue', description=description, 
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info), 500
 
 @app.route('/error/')
 @app.route('/error/<raw_sim>')
@@ -958,14 +996,16 @@ def error(raw_sim=None):
         sim = "None"
     app.logger.error('Rendering error page')
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message=session['message'],
-                           description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim)
+                           description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
 
 @app.route('/unauthorized/')
 def unauthorized():
     app.logger.error("Unauthorized user attempted to connect")
     return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro,
                            message=session['message'], description=session['description'], time=time.ctime(),
-                           version=app.config['_VERSION'])
+                           version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
 
 def check_authorized(headers, config):
     print "Checking for database at {}".format(os.path.join(config['_INP_PATH'], 'override_users.db'))
