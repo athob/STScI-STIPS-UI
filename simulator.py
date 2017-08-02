@@ -32,7 +32,10 @@ os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input", "stips_data")
 sys.path.append(os.path.join(os.getcwd(),"lib"))
 sys.path.append(os.path.join(os.getcwd(), "sim_input", "modules"))
 
-repo = git.Repo(os.path.abspath(os.path.join(os.getcwd(), "..")))
+repo_dir = os.getcwd()
+if not os.path.exists(os.path.join(repo_dir, ".git")):
+    repo_dir = os.path.abspath(os.path.join(repo_dir, ".."))
+repo = git.Repo(repo_dir)
 tree = repo.tree()
 committed_date = 0
 for blob in tree:

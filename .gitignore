@@ -1,12 +1,12 @@
 # Project files that don't belong on git #
 ##########################################
-code/sim_input/cdbs
-code/sim_input/pandeia_data
-code/sim_input/webbpsf-data
-code/stips
+sim_input/cdbs
+sim_input/pandeia_data
+sim_input/webbpsf-data
+stips
 *.pickle
-code/static/sim_temp/sim*
-code/static/sim_temp/psf_cache/psf*.fits
+static/sim_temp/sim*
+static/sim_temp/psf_cache/psf*.fits
 
 # Compiled source #
 ###################
