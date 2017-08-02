@@ -1,4 +1,4 @@
-#!/usr/stsci/pyssg/Python-2.7.3/bin/python
+#!/usr/bin/env python
 
 import glob
 import logging

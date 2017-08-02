@@ -3,15 +3,29 @@ import os
 import sys
 import time
 
-os.environ["PYSYN_CDBS"] = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs"))
-os.environ["pandeia_refdata_path"] = os.path.abspath(os.path.join(os.getcwd(), "..", "pandeia_data"))
+# Set plot backend. Must happen before importing pylab.
+import matplotlib
+matplotlib.use('Agg')
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..", "modules"))
+os.environ["PYSYN_CDBS"] = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs"))
+os.environ["pandeia_refdata"] = os.path.abspath(os.path.join(os.getcwd(), "..", "pandeia_data"))
+os.environ['WEBBPSF_PATH'] = os.path.join(os.getcwd(), "..", "webbpsf-data")
+os.environ['WEBBPSF_SKIP_CHECK'] = '1'
+
+pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
+with open(pandeia_version_file, 'r') as inf:
+    pandeia_version_info = inf.readline().strip()
+print("Pandeia Version: {}".format(pandeia_version_info))
+
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..", "..", "stips", "stips")))
 
 import numpy as np
 import pysynphot as ps
 from stips.utilities import InstrumentList
+from stips import __version__ as stips_version_info
 from astropy.io import fits as pyfits
+
+print("STIPS Version: {}".format(stips_version_info))
 
 COMPFILES =  sorted(glob.glob(os.path.join(os.environ["PYSYN_CDBS"],"mtab","*tmc.fits")))
 GRAPHFILES = sorted(glob.glob(os.path.join(os.environ["PYSYN_CDBS"],"mtab","*tmg.fits")))
@@ -24,84 +38,37 @@ wfc3_refs = {
                 'waveset': (500,26000,10000.,'log')
             }
 
-instruments = ['nircam', 'miri', 'wfirstimager', 'wfc3']
 area =  {
-            'nircam':       253260.0,
+            'nircamlong':   253260.0,
+            'nircamshort':  253260.0,
             'miri':         253260.0,
-            'wfc3':         45238.93416,
-            'wfirstimager': 45238.93416
+            'wfc3ir':       45238.93416,
+            'wfi':          45238.93416
         }
-modes = {   'nircam':       ['sw_imaging', 'lw_imaging'],
+modes = {
+            'nircamshort':  ['sw_imaging'],
+            'nircamlong':   ['lw_imaging'],
             'miri':         ['imaging'],
-            'wfc3':         ['imaging'],
-            'wfirstimager': ['imaging']
+            'wfc3ir':       ['imaging'],
+            'wfi':          ['imaging']
         }
 filters = {
-            'nircam':   {
-                            'sw_imaging':   [ 
-                                                "f070w", "f090w", "f115w", "f140m", "f150w", "f162m",
-                                                "f164n", "f182m", "f187n", "f200w", "f210m", "f212n",
-                                                "f225n"
-                                            ],
-                            'lw_imaging':   [
-                                                "f250m", "f277w", "f300m", "f322w", "f323n", "f335m",
-                                                "f356w", "f360m", "f405n", "f410m", "f418n", "f430m",
-                                                "f444w", "f460m", "f466n", "f470n", "f480m"
+            'nircamshort':  {'sw_imaging': ["f070w", "f090w", "f115w", "f140m", "f150w", "f162m", "f164n", "f182m", "f187n", "f200w", "f210m", "f212n"]},
+            'nircamlong':   {'lw_imaging': ["f250m", "f277w", "f300m", "f323n", "f335m", "f356w", "f360m", "f405n", "f410m", "f430m", "f444w", "f460m", "f466n", "f470n", 
+                                            "f480m"
                                             ]
-                        },
-            'miri':     {
-                            'imaging': [
-                                            "f560w", "f770w", "f1000w", "f1130w", "f1280w", "f1500w", 
-                                            "f1800w", "f2100w", "f2550w"
-                                        ]
-                        },
-            'wfc3':     {
-                            'imaging': [
-                                            "f105w", "f110w", "f125w", "f126n", "f127m", "f128n", 
-                                            "f130n", "f132n", "f139m", "f140w", "f153m", "f160w", 
-                                            "f164n", "f167n"
-                                        ]
-                        },
-            'wfirstimager': {
-                                'imaging':  [
-                                                'z087', 'y106', 'w149', 'j129', 'h158', 'f184'
-                                            ]
-                            }
+                            },
+            'miri':         {'imaging': ["f560w", "f770w", "f1000w", "f1130w", "f1280w", "f1500w", "f1800w", "f2100w", "f2550w"]},
+            'wfc3ir':       {'imaging': ["f110w", "f160w"]},
+            'wfi':          {'imaging': ['z087', 'y106', 'w149', 'j129', 'h158', 'f184']}
           }
 apertures = {
-                'nircam':   {
-                                'sw_imaging':   "sw",
-                                'lw_imaging':   "lw"
-                        },
-                'miri':     {
-                                'imaging':      "imager"
-                            },
-                'wfc3':     {
-                                'imaging':      "default"
-                            },
-                'wfirstimager': {
-                                    'imaging':  "any"
-                                }
+                'nircamshort':  {'sw_imaging':  "sw"},
+                'nircamlong':   {'lw_imaging':  "lw"},
+                'miri':         {'imaging':     "imager"},
+                'wfc3ir':       {'imaging':     "default"},
+                'wfi':          {'imaging':     "any"}
             }
-
-def get_pce(instrument, mode, filter, aperture, disperser):
-
-    obsmode = {
-               'instrument': instrument,
-               'mode': mode,
-               'filter': filter,
-               'aperture': aperture,
-               'disperser': disperser
-               }
-
-    conf = {'instrument': obsmode}
-
-    i = InstrumentFactory(config=conf)
-    wr = i.get_wave_range()
-    wave = np.linspace(wr['wmin'], wr['wmax'], num=500)
-    pce = i.get_total_eff(wave)
-    
-    return wave,pce
 
 def get_grid_points():
     grid_file = os.path.abspath(os.path.join(os.getcwd(), "..", "cdbs", "grid", "phoenix", "catalog.fits"))
@@ -125,14 +92,14 @@ instruments = InstrumentList()
 print "{}: Making Bandpasses...".format(time.ctime())
 for instrument in instruments:
     my_instrument = instruments[instrument]()
-    bandpasses[instrument] = {}
-    result_arrays[instrument] = {}
-    for mode in modes[instrument]:
-        for filter in filters[instrument][mode]:
-            print "\t{}: {},{},{},{}".format(time.ctime(), instrument, mode, filter, apertures[instrument][mode])
+    bandpasses[instrument.lower()] = {}
+    result_arrays[instrument.lower()] = {}
+    for mode in modes[instrument.lower()]:
+        for filter in filters[instrument.lower()][mode]:
+            print "\t{}: {},{},{},{}".format(time.ctime(), instrument, mode, filter, apertures[instrument.lower()][mode])
             my_instrument.reset(0., 0., 0., filter.upper())
-            bandpasses[instrument][filter] = my_instrument.bandpass
-            result_arrays[instrument][filter] = np.empty((len(coords[0]), len(coords[1]), len(coords[2]), len(coords[3])))
+            bandpasses[instrument.lower()][filter] = my_instrument.bandpass
+            result_arrays[instrument.lower()][filter] = np.empty((len(coords[0]), len(coords[1]), len(coords[2]), len(coords[3])))
 print "Done\n"
 
 total = len(coords[0]) * len(coords[1]) * len(coords[2]) * len(coords[3])
@@ -152,27 +119,30 @@ for i, Z in enumerate(coords[0]):
                 if counts:
                     spec_norm = spec.renorm(mag, 'vegamag', norm_bandpass)
                 for instrument in instruments:
-                    ps.setref(area=area[instrument], waveset=(500, 260000, 10000., 'log'))
-                    for mode in modes[instrument]:
-                        for filter in filters[instrument][mode]:
+                    ps.setref(area=area[instrument.lower()], waveset=(500, 260000, 10000., 'log'))
+                    for mode in modes[instrument.lower()]:
+                        for filter in filters[instrument.lower()][mode]:
                             if counts:
-                                obs = ps.Observation(spec_norm, bandpasses[instrument][filter], binset=spec_norm.wave)
-                                result_arrays[instrument][filter][i,j,k,l] = obs.countrate()
+                                obs = ps.Observation(spec_norm, bandpasses[instrument.lower()][filter], binset=spec_norm.wave)
+                                result_arrays[instrument.lower()][filter][i,j,k,l] = obs.countrate()
                                 print ".",
                             else:
-                                result_arrays[instrument][filter][i,j,k,l] = 0.
+                                result_arrays[instrument.lower()][filter][i,j,k,l] = 0.
                                 print "x",
                 print ""
                 n += 1
 
 print "{}: Saving files...".format(time.ctime()),
+with open("VERSION.txt", "wt") as outf:
+    outf.write("Pandeia: {}\n".format(pandeia_version_info))
+    outf.write("STIPS: {}\n".format(stips_version_info))
 np.save(os.path.join(os.getcwd(), 'grid', 'input.npy'), coords)
 for instrument in instruments:
-    for mode in modes[instrument]:
-        for filter in filters[instrument][mode]:
+    for mode in modes[instrument.lower()]:
+        for filter in filters[instrument.lower()][mode]:
             addition = ''
-            if instrument == "wfc3":
+            if instrument.lower() == "wfc3":
                 addition = 'ir'
-            np.save(os.path.join(os.getcwd(), 'grid', 'result_{}{}_{}.npy'.format(instrument, addition, filter)),
-                    result_arrays[instrument][filter])
+            np.save(os.path.join(os.getcwd(), 'grid', 'result_{}{}_{}.npy'.format(instrument.lower(), addition, filter)),
+                    result_arrays[instrument.lower()][filter])
 print "done"
