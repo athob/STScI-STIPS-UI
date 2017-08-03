@@ -30,7 +30,6 @@ os.environ['pandeia_refdata'] = os.path.join(os.getcwd(), "sim_input", "pandeia_
 os.environ['stips_data'] = os.path.join(os.getcwd(), "sim_input", "stips_data")
 
 sys.path.append(os.path.join(os.getcwd(),"lib"))
-sys.path.append(os.path.join(os.getcwd(), "sim_input", "modules"))
 
 repo_dir = os.getcwd()
 if not os.path.exists(os.path.join(repo_dir, ".git")):
@@ -78,6 +77,11 @@ for blob in tree:
 stips_mod_time = datetime.datetime.fromtimestamp(committed_date)
 print("STIPS Mod Time: {}".format(stips_mod_time))
 print("STIPS Version: {}".format(stips_version))
+
+with open(os.path.join(os.environ['stips_data'], 'grid', 'VERSION.txt'), 'r') as inf:
+    grid_pandeia_info = inf.readline().strip()
+    grid_stips_info = inf.readline().strip()
+print("Grid: {}, {}".format(grid_pandeia_info, grid_stips_info))
 
 pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
 with open(pandeia_version_file, 'r') as inf:
@@ -418,7 +422,8 @@ def input(raw_sim=None):
     resp = make_response(render_template('input.html', params=params, instruments=INSTRUMENTS,
                                          telescope=telescope, instrument_intro=instrument_intro, 
                                          server_mod_time=server_mod_time, stips_version=stips_version, 
-                                         stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info))
+                                         stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                                         grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info))
     if params['user']['update_user'] == 'yes':
         if params['user']['save_user']:
             app.logger.info("Setting USER ID cookie to {}".format(params['user']['email']))
@@ -582,7 +587,7 @@ def final(raw_sim):
         return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
                                telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
     else:
@@ -590,7 +595,8 @@ def final(raw_sim):
         return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
                                telescope=telescope, instrument_intro=instrument_intro, 
                                server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                               grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
 
 @app.route('/docs/<raw_page>/<raw_anchor>')
 @app.route('/docs/<raw_page>')
@@ -614,7 +620,8 @@ def docs(raw_page='main', raw_anchor=''):
         doc_template = "notes.html"
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
                            telescope=telescope, instrument_intro=instrument_intro, server_mod_time=server_mod_time, 
-                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
+                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
 
 @app.route('/progress')
 def progress():
@@ -627,7 +634,8 @@ def progress():
     task_id = asciify(request.args.get('tid', '')[:1000])
     return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, task_id=task_id, time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info) if task_id else redirect('/')
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, 
+                           grid_stips=grid_stips_info) if task_id else redirect('/')
 
 @app.route("/form")
 def simulate_form():
@@ -978,7 +986,7 @@ def handle_form_upload(obj_response, files, form_values):
 def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message='Not Found', 
                            description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info), 404
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info), 404
 
 @app.errorhandler(ConnectionError)
 def page_not_found(e):
@@ -987,7 +995,8 @@ def page_not_found(e):
     description = "Check to make sure that %s running." % (debug_description if app.debug else production_description)
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro,
                            message='Coult not connect to the task queue', description=description, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info), 500
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info), 500
 
 @app.route('/error/')
 @app.route('/error/<raw_sim>')
@@ -1000,7 +1009,8 @@ def error(raw_sim=None):
     app.logger.error('Rendering error page')
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message=session['message'],
                            description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
 
 @app.route('/unauthorized/')
 def unauthorized():
@@ -1008,7 +1018,8 @@ def unauthorized():
     return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro,
                            message=session['message'], description=session['description'], time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info)
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
 
 def check_authorized(headers, config):
     print "Checking for database at {}".format(os.path.join(config['_INP_PATH'], 'override_users.db'))

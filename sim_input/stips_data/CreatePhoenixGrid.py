@@ -133,16 +133,13 @@ for i, Z in enumerate(coords[0]):
                 n += 1
 
 print "{}: Saving files...".format(time.ctime()),
-with open("VERSION.txt", "wt") as outf:
+with open(os.path.join(os.getcwd(), "grid", "VERSION.txt"), "wt") as outf:
     outf.write("Pandeia: {}\n".format(pandeia_version_info))
     outf.write("STIPS: {}\n".format(stips_version_info))
 np.save(os.path.join(os.getcwd(), 'grid', 'input.npy'), coords)
 for instrument in instruments:
     for mode in modes[instrument.lower()]:
         for filter in filters[instrument.lower()][mode]:
-            addition = ''
-            if instrument.lower() == "wfc3":
-                addition = 'ir'
-            np.save(os.path.join(os.getcwd(), 'grid', 'result_{}{}_{}.npy'.format(instrument.lower(), addition, filter)),
+            np.save(os.path.join(os.getcwd(), 'grid', 'result_{}_{}.npy'.format(instrument.lower(), filter)),
                     result_arrays[instrument.lower()][filter])
 print "done"
