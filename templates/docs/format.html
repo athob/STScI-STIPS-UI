@@ -25,8 +25,9 @@
 	keyword/value pairs may be added to it, after the table itself has been written.
 </p>
 <p>
-	STIPS currently understands six catalogue formats, named 'phoenix', 'bc95', 'internal', 'mixed', 
-	'multifilter', and 'generic'. The required metadata and columns are shown below.
+	STIPS currently understands eight catalogue formats, named 'phoenix', 'phoenix_realtime', 'pandeia', 
+	'bc95', 'internal', 'mixed', 'multifilter', and 'generic'. The required metadata and columns are 
+	shown below.
 </p>
 
 <h3 id="CatalogueFormat-PhoenixCatalogue">Phoenix Catalogue</h3>
@@ -54,7 +55,58 @@
 <p>
 	During the observation, this catalogue will be converted to an internal format, with any 
 	necessary additional metadata added at this point. Stellar count rates will be generated from 
-	the Phoenix grid.
+	the Phoenix grid (if available for the chosen instrument and filter). If the grid is not available,
+	count rates will be calculated at runtime, which will make the simulation considerably slower.
+</p>
+
+<h3 id="CatalogueFormat-PhoenixRealtime">Phoenix Realtime Catalogue</h3>
+
+<p>
+	A real-time phoenix catalogue also includes stars drawn from the <a href="//phoenix.ens-lyon.fr">phoenix simulator</a> via pysynphot,
+	but rather than specifying populations, the individual star characteristics are specified and the stars are generated at runtime. Note that,
+	because this does not use the pre-computed Phoenix grid, simulations of large numbers of stars will be much slower using this method than the
+	<a href="#CatalogueFormat-PhoenixCatalogue">standard Phoenix catalogue</a> format. A realtime phoenix catalogue is a point-source catalogue that
+	specifies each source by:
+</p>
+<ul>
+	<li>ID</li>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>Teff</li>
+	<li>Log(g)</li>
+	<li>Metallicity ([Fe/H])</li>
+	<li>Apparent Magnitude</li>
+</ul>
+<p>In order to identify the catalogue as a phoenix realtime catalogue, the following metadata must be present:</p>
+<ul>
+	<li>type=phoenix_realtime</li>
+</ul>
+<p>
+	During the observation, this catalogue will be converted to an internal format, with any 
+	necessary additional metadata added at this point.
+</p>
+
+<h3 id="CatalogueFormat-Pandeia">Pandeia Phoenix Catalgue</h3>
+
+<p>
+	A Pandeia Phoenix catalogue is similar to a realtime phoenix catalogue, except that the stars are 
+	generated, from the same source, via Pandeia commands and using Pandeia's keywords. A Pandeia 
+	Phoenix catalogue is a point-source catalogue that specifies each source by:
+</p>
+<ul>
+	<li>ID</li>
+	<li>RA (decimal degrees)</li>
+	<li>DEC (decimal degrees)</li>
+	<li>Key</li>
+	<li>Apparent Magnitude</li>
+</ul>
+<p>In order to identify the catalogue as a Pandeia phoenix catalogue, the following metadata must be present:</p>
+<ul>
+	<li>type=pandeia</li>
+</ul>
+<p>
+	During the observation, this catalogue will be converted to an internal format, with any 
+	necessary additional metadata added at this point.
 </p>
 
 <h3 id="CatalogueFormat-BC95Catalogue">BC95 Catalogue</h3>
@@ -82,7 +134,7 @@
 	<li>Radius (arcseconds)</li>
 	<li>Axial Ratio</li>
 	<li>PA (degrees)</li>
-	<li>Apparent Johnson V-band magnitude</li>
+	<li>Apparent Johnson V-band surface brightness</li>
 </ul>
 <p>In order to identify the catalogue as a bc95 catalogue, the following metadata must be present:</p>
 <ul>
@@ -104,7 +156,7 @@
 	<li>ID</li>
 	<li>RA (decimal degrees)</li>
 	<li>DEC (decimal degrees)</li>
-	<li>FLUX (count rate in the specified filter, counts/s)</li>
+	<li>FLUX (for point sources, count rate in the specified filter, counts/s. For sersic profiles, surface brightness inside Re in the specified filter, counts/s)</li>
 	<li>TYPE (either 'point' or 'sersic')</li>
 	<li>N (sersic profile index if TYPE is 'sersic', otherwise ignored)</li>
 	<li>Re (half-light radius in pixels if TYPE is 'sersic', otherwise ignored)</li>

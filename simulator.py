@@ -609,15 +609,15 @@ def docs(raw_page='main', raw_anchor=''):
         session['message'] = "User {} is unauthorized".format(request.headers.get('remote-user'))
         session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
         return redirect(url_for("unauthorized"))
-    doc_template = "docs_main.html"
+    doc_template = "docs/main.html"
     if "interface" in page:
-        doc_template = "interface.html"
+        doc_template = "docs/interface.html"
     elif "format" in page:
-        doc_template = "format.html"
+        doc_template = "docs/format.html"
     elif "implementation" in page:
-        doc_template = "implementation.html"
+        doc_template = "docs/implementation.html"
     elif "notes" in page:
-        doc_template = "notes.html"
+        doc_template = "docs/notes.html"
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
                            telescope=telescope, instrument_intro=instrument_intro, server_mod_time=server_mod_time, 
                            stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
