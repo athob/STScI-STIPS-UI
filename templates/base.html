@@ -27,6 +27,9 @@
                 <p class="flashed-message">{{ message }}</p>
             </div>
             {% endfor %}
+            {% if email_test != "" %}
+            	<p style="color: red;">Warning: Sending test e-mail produced error {{email_test}}.</p>
+            {% endif %}
             
             <div class="content">
             {% block content %}{% endblock %}

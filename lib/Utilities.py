@@ -95,28 +95,21 @@ def SendEmail(msg_to, msg_subject, msg_text, msg_attach):
     Send an e-mail
 
     """
-    print("Starting e-mail send to {}".format(msg_to))
-    if validate_email(msg_to):
-        print("Recipient address valid")
-        msg = MIMEMultipart()
-        print("Created empty message")
-        msg['Subject'] = msg_subject
-        print("Set Subject")
-        msg['From'] = "stips@stsci.edu"
-        print("Set From Address")
-        msg['To'] = msg_to
-        print("Set To Address")
-        msg.attach(MIMEText(msg_text))
-        print("Attached Message Text")
-        for fname in msg_attach:
-            print("Attaching File {}".format(fname))
-            with open(fname, 'rb') as in_file:
-                img = MIMEImage(in_file.read())
-                msg.attach(img)
-        print("Starting Message Send")
-        s = smtplib.SMTP('smtp.stsci.edu')
-        print("Sending Message")
-        s.sendmail('stips@stsci.edu',[msg_to], msg.as_string())
-        print("Sent Message")
-        s.quit()
-        print("Done E-mail")
+    output = ""
+    try:
+        if validate_email(msg_to):
+            msg = MIMEMultipart()
+            msg['Subject'] = msg_subject
+            msg['From'] = "stips@stsci.edu"
+            msg['To'] = msg_to
+            msg.attach(MIMEText(msg_text))
+            for fname in msg_attach:
+                with open(fname, 'rb') as in_file:
+                    img = MIMEImage(in_file.read())
+                    msg.attach(img)
+            s = smtplib.SMTP('smtp.stsci.edu')
+            s.sendmail('stips@stsci.edu',[msg_to], msg.as_string())
+            s.quit()
+    except Exception as e:
+        output = str(e)
+    return output

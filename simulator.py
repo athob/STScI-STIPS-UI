@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from werkzeug import secure_filename
-import cPickle, datetime, git, glob, json, logging, logging.config, os, re, shutil, sys, numpy, sqlite3, time, zipfile
+import cPickle, datetime, git, glob, json, logging, logging.config, os, platform, re, shutil, sys, numpy, sqlite3, time, zipfile
 import montage_wrapper as montage
 import unicodedata
 
@@ -67,7 +67,10 @@ from stips.observation_module import ObservationModule
 
 stips_version = stips.__version__
 
-repo = git.Repo(os.path.split(os.path.split(os.path.split(stips.__file__)[0])[0])[0])
+try:
+    repo = git.Repo(os.path.split(os.path.split(stips.__file__)[0])[0])
+except git.exc.InvalidGitRepositoryError as e:
+    repo = git.Repo(os.path.split(os.path.split(os.path.split(stips.__file__)[0])[0])[0])
 tree = repo.tree()
 committed_date = 0
 for blob in tree:
@@ -152,6 +155,7 @@ app.config['check_group'] = app.config.get('check_group', "0")
 app.config['allowed_groups'] = app.config.get('allowed_groups', [])
 app.config['check_users'] = app.config.get('check_users', "0")
 app.config['user_db'] = app.config.get('user_db', None)
+app.config['email_test'] = SendEmail('york@stsci.edu', 'Starting Simulator on {}'.format(platform.uname()[1]), 'Starting Simulator.\n', [])
 
 @celery.task(bind=True,ignore_results=False,name="tasks.start_sequence")
 def start_sequence(self,params):
@@ -170,7 +174,11 @@ def start_sequence(self,params):
         send_to = params['user']['email']
         subject = "Your STIPS simulation {} has started".format(out_prefix)
         send_text = start_email.substitute(progress_page=params['progress_page'], task_file=task_file)
-        SendEmail(send_to, subject, send_text, [])
+        result = SendEmail(send_to, subject, send_text, [])
+        if result != "":
+            if 'errors' not in params:
+                params['errors'] = []
+            params['errors'].append(result)
     return params
 
 @celery.task(bind=True,ignore_result=False,name="tasks.create_catalogues")
@@ -361,7 +369,11 @@ def finalize(self,params):
         obs_str = "\n".join(obs_array)
         msg_text = done_email.substitute(final_page=params['final_page'], zip=params['static_page']+params['out_prefix']+'.zip',
                                          inputs=input_cats, mosaics=input_mosaics, observations=obs_str)
-        SendEmail(msg_to, subject, msg_text, out_files)
+        result = SendEmail(msg_to, subject, msg_text, out_files)
+        if result != "":
+            if 'errors' not in params:
+                params['errors'] = []
+            params['errors'].append(result)
     self.update_state(state='FINISHED OBSERVATIONS')
     params['stop_time'] = datetime.datetime.now()
     f = open(os.path.join(params['out_path'],params['out_prefix']+'_final.pickle'),'wb')
@@ -423,7 +435,8 @@ def input(raw_sim=None):
                                          telescope=telescope, instrument_intro=instrument_intro, 
                                          server_mod_time=server_mod_time, stips_version=stips_version, 
                                          stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                                         grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info))
+                                         grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                                         email_test=app.config['email_test']))
     if params['user']['update_user'] == 'yes':
         if params['user']['save_user']:
             app.logger.info("Setting USER ID cookie to {}".format(params['user']['email']))
@@ -587,7 +600,8 @@ def final(raw_sim):
         return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
                                telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                               email_test=app.config['email_test'])
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
     else:
@@ -596,7 +610,8 @@ def final(raw_sim):
                                telescope=telescope, instrument_intro=instrument_intro, 
                                server_mod_time=server_mod_time, stips_version=stips_version, 
                                stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                               grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
+                               grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                               email_test=app.config['email_test'])
 
 @app.route('/docs/<raw_page>/<raw_anchor>')
 @app.route('/docs/<raw_page>')
@@ -621,7 +636,7 @@ def docs(raw_page='main', raw_anchor=''):
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
                            telescope=telescope, instrument_intro=instrument_intro, server_mod_time=server_mod_time, 
                            stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 @app.route('/progress')
 def progress():
@@ -635,7 +650,7 @@ def progress():
     return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, task_id=task_id, time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, 
-                           grid_stips=grid_stips_info) if task_id else redirect('/')
+                           grid_stips=grid_stips_info, email_test=app.config['email_test']) if task_id else redirect('/')
 
 @app.route("/form")
 def simulate_form():
@@ -727,7 +742,11 @@ def simulate_results():
         if params['user']['email'] is not None:
             msg_subject = "Your STIPS simulation %s encountered an error" % (sim_id)
             msg_text = error_template.substitute(id=sim_id, error_message=error_message.replace("&nbsp;", " ").replace("<br />", "\n"))
-            SendEmail(params['user']['email'], msg_subject, msg_text, [])
+            result = SendEmail(params['user']['email'], msg_subject, msg_text, [])
+            if result != "":
+                if 'errors' not in params:
+                    params['errors'] = []
+                params['errors'].append(result)
         return redirect(url_for('error', raw_sim=task_name))
     params = task.get()
     app.logger.info('Got back %s',str(params))
@@ -986,7 +1005,8 @@ def handle_form_upload(obj_response, files, form_values):
 def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message='Not Found', 
                            description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info), 404
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                           email_test=app.config['email_test']), 404
 
 @app.errorhandler(ConnectionError)
 def page_not_found(e):
@@ -996,7 +1016,7 @@ def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro,
                            message='Coult not connect to the task queue', description=description, 
                            server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info), 500
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test']), 500
 
 @app.route('/error/')
 @app.route('/error/<raw_sim>')
@@ -1010,7 +1030,7 @@ def error(raw_sim=None):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message=session['message'],
                            description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
                            server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 @app.route('/unauthorized/')
 def unauthorized():
@@ -1019,7 +1039,7 @@ def unauthorized():
                            message=session['message'], description=session['description'], time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info)
+                           grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 def check_authorized(headers, config):
     print "Checking for database at {}".format(os.path.join(config['_INP_PATH'], 'override_users.db'))
