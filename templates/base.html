@@ -15,6 +15,10 @@
         
         <div class="content-container">
         	<p>{{ instrument_intro | safe }}</p>
+        	<p>STIPS is provided to {{telescope}} observers as an exploratory tool. It is provided as-is with no express or implied warranties. The inputs it takes and instrument 
+        	models it uses may not be accurate or consistent with the Astronomer&rsquo;s Proposal Tool (APT) or the {{telescope}} Exposure Time Calculator (ETC). The help desk 
+        	may not be able to respond to questions related to STIPS or may take longer than usual. In case of any discrepancy with STIPS, the {{telescope}} ETC and APT should be 
+        	assumed to be correct.</p>
             <form action="/">
             	<button type="submit">Go to Start Page</button>
             </form>
@@ -47,7 +51,7 @@
 			   Pandeia Data version {{pandeia_version}}.<br/>
 			   Phoenix Grid generated with {{grid_pandeia}} and {{grid_stips}}<br/>
 			   &copy; Space Telescope Science Institute, Baltimore, MD<br/>
-			   For assistance, e-mail <a href="mailto:help@stsci.edu">help@stsci.edu</a></p>
+			   {{ instrument_help | safe }}</p>
         </div>
     </div>
 <script src="/static/jquery.js"></script>

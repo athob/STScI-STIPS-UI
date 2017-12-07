@@ -149,6 +149,7 @@ DefaultSettings.INSTRUMENTS = INSTRUMENTS
 app.config['telescope'] = app.config.get('telescope', 'JWST-WFIRST')
 telescope = app.config['telescope']
 instrument_intro = instrument_intro_template[app.config['telescope']]
+instrument_help = instrument_help_template[app.config['telescope']]
 
 app.config['internal_only'] = app.config.get('internal_only', "0")
 app.config['check_group'] = app.config.get('check_group', "0")
@@ -432,7 +433,7 @@ def input(raw_sim=None):
         print("Initial simulation parameters created")
         return redirect(url_for('input', raw_sim=uid))
     resp = make_response(render_template('input.html', params=params, instruments=INSTRUMENTS,
-                                         telescope=telescope, instrument_intro=instrument_intro, 
+                                         telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                          server_mod_time=server_mod_time, stips_version=stips_version, 
                                          stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
                                          grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
@@ -601,13 +602,13 @@ def final(raw_sim):
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
                                telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
                                stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
-                               email_test=app.config['email_test'])
+                               email_test=app.config['email_test'], instrument_help=instrument_help)
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
     else:
         app.logger.info('Result %s not found',sim)
         return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
-                               telescope=telescope, instrument_intro=instrument_intro, 
+                               telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                server_mod_time=server_mod_time, stips_version=stips_version, 
                                stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
                                grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
@@ -634,7 +635,7 @@ def docs(raw_page='main', raw_anchor=''):
     elif "notes" in page:
         doc_template = "docs/notes.html"
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
-                           telescope=telescope, instrument_intro=instrument_intro, server_mod_time=server_mod_time, 
+                           telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, server_mod_time=server_mod_time, 
                            stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
@@ -647,7 +648,7 @@ def progress():
         session['description'] = "User {} is not in the authorized users list".format(request.headers.get('remote-user'))
         return redirect(url_for("unauthorized"))
     task_id = asciify(request.args.get('tid', '')[:1000])
-    return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, task_id=task_id, time=time.ctime(),
+    return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, task_id=task_id, time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, 
                            grid_stips=grid_stips_info, email_test=app.config['email_test']) if task_id else redirect('/')
@@ -1003,7 +1004,7 @@ def handle_form_upload(obj_response, files, form_values):
 # Errors
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message='Not Found', 
+    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message='Not Found', 
                            description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
                            email_test=app.config['email_test']), 404
@@ -1013,7 +1014,7 @@ def page_not_found(e):
     debug_description = "<strong>redis-server</strong> is"
     production_description = "both <strong>redis-server</strong> and <strong>worker.py</strong> are"
     description = "Check to make sure that %s running." % (debug_description if app.debug else production_description)
-    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro,
+    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message='Coult not connect to the task queue', description=description, 
                            server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test']), 500
@@ -1027,7 +1028,7 @@ def error(raw_sim=None):
     else: #raw_sim is None
         sim = "None"
     app.logger.error('Rendering error page')
-    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, message=session['message'],
+    return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message=session['message'],
                            description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
                            server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
@@ -1035,7 +1036,7 @@ def error(raw_sim=None):
 @app.route('/unauthorized/')
 def unauthorized():
     app.logger.error("Unauthorized user attempted to connect")
-    return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro,
+    return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message=session['message'], description=session['description'], time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
