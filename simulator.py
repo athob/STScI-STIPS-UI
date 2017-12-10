@@ -725,7 +725,7 @@ def simulate_results():
     task = task_set[-1]
     error_message = ""
     if not task.ready():
-        if isinstance(task.serializable(), str):
+        if hasattr(task, 'serializable') and isinstance(task.serializable(), str):
             return redirect('/prograss?tid=' + task.serializable())
         else:
             error_message = ""
