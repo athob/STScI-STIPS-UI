@@ -63,23 +63,13 @@
 			<li>Webbpsf reference data for all instruments you wish to simulate</li>
 		</ul>
 	</li>
-</ul>
-<p>STIPS includes its own basic reference data. Currently that data includes:</p>
-<ul>
-	<li>pre-computed stellar grid for WFC3 filters</li>
 	<li>
-		pre-computed grid of isochrones derived from <a href="//stev.oapd.inaf.it/cgi-bin/cmd">CMD 2.7</a>, 
-		used in generating stellar populations
+		<strong>Reference Data</strong> STIPS requires a reference data directory which it looks for
+		via the environment variable &lsquo;stips_data&rsquo;. This data must be present for STIPS
+		to function correctly. Currently, it may be obtained directly from 
+		<a href="mailto:york@stsci.edu">Brian York</a>, or from the STSCI-STIPS-UI github package.
 	</li>
-	<li>PSF files for WFC3 F110W and F160W filters</li>
-	<li>WFC3 flatfield and dark residual model files</li>
 </ul>
-<p>
-	When and as JWST and WFIRST reference data becomes available to the public, STIPS will include equivalent 
-	files for those instruments. For the moment, if such files are available locally, the &quot;stips_data&quot; 
-	environment variable may be set to point to it. The required folder layout is shown by the data directory in 
-	the STIPS module.
-</p>
 
 <h3 id="STIPSImplementation-SceneGeneration">Scene Generation</h3>
 
