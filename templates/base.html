@@ -15,10 +15,13 @@
         
         <div class="content-container">
         	<p>{{ instrument_intro | safe }}</p>
-        	<p>STIPS is provided to {{telescope}} observers as an exploratory tool. It is provided as-is with no express or implied warranties. The inputs it takes and instrument 
-        	models it uses may not be accurate or consistent with the Astronomer&rsquo;s Proposal Tool (APT) or the {{telescope}} Exposure Time Calculator (ETC). The help desk 
-        	may not be able to respond to questions related to STIPS or may take longer than usual. In case of any discrepancy with STIPS, the {{telescope}} ETC and APT should be 
-        	assumed to be correct.</p>
+        	<div style="border: 1px solid black; padding: 0 10px 0 10px; text-align: justify">
+	        	<p style="color: red; text-align: center; font-weight: bold">NOTE</p>
+    	    	<p style="color: red">STIPS is provided to {{telescope}} observers as an exploratory tool. It is provided as-is with no express or implied warranties. The inputs it takes and instrument 
+        		models it uses may not be accurate or consistent with the Astronomer&rsquo;s Proposal Tool (APT) or the {{telescope}} Exposure Time Calculator (ETC). The help desk 
+        		may not be able to respond to questions related to STIPS or may take longer than usual. In case of any discrepancy with STIPS, the {{telescope}} ETC and APT should be 
+        		assumed to be correct.</p>
+        	</div>
             <form action="/">
             	<button type="submit">Go to Start Page</button>
             </form>
