@@ -130,16 +130,16 @@ instrument_intro_template =  {
                                      based on user inputs, instrument models, and library catalogs for a
                                      range of stellar and/or galactic populations. This page provides the
                                      functionality to run simulations for the WFIRST Wide Field Imager.
-                                     Please refer to <a href="http://www.stsci.edu/wfirst/software/STIPS">
-                                     The STIPS WFIRST Introductory Page</a> for a detailed introduction and 
+                                     Please refer to the <a href="http://www.stsci.edu/wfirst/software/STIPS">STIPS WFIRST Introductory Page</a> for a detailed introduction and 
                                      description of the tool.""",
                         'JWST': """The STIPS (Space Telescope Image Product Simulator) software produces
                                    simulated imaging data for complex wide-area astronomical scenes
                                    based on user inputs, instrument models, and library catalogs for a
                                    range of stellar and/or galactic populations. This page provides the
                                    functionality to run simulations for the JWST NIRCam and MIRI Imagers.
-                                   The STIPS JWST Introductory Page</a> for a detailed introduction and 
-                                   description of the tool.""",
+                                   Please refer to the 
+                                   <a href="https://jwst.stsci.edu/science-planning/proposal-planning-toolbox/image-and-spectroscopy-simulator">STIPS JWST Introductory Page</a>
+                                   for a detailed introduction and brief description of the tool.""",
 
 #                                   Please refer to <a href="http://www.stsci.edu/wfirst/software/STIPS">
                         
@@ -148,10 +148,9 @@ instrument_intro_template =  {
                                           based on user inputs, instrument models, and library catalogs for a
                                           range of stellar and/or galactic populations. This page provides the
                                           functionality to run simulations for the WFIRST Wide Field Imager,
-                                          and the JWST NIRCam and MIRI Imagers. Please refer to 
-                                          <a href="http://www.stsci.edu/wfirst/software/STIPS">The STIPS WFIRST 
-                                          Introductory Page</a> for a detailed introduction and description of 
-                                          the tool."""
+                                          and the JWST NIRCam and MIRI Imagers. Please refer to the
+                                          <a href="http://www.stsci.edu/wfirst/software/STIPS">STIPS WFIRST Introductory Page</a> 
+                                          for a detailed introduction and description of the tool."""
                     }
 
 # Introductory HTML
