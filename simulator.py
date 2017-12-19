@@ -91,6 +91,12 @@ with open(pandeia_version_file, 'r') as inf:
     pandeia_version_info = inf.readline().strip()
 print("Pandeia Version: {}".format(pandeia_version_info))
 
+import webbpsf
+webbpsf_version = webbpsf.__version__
+with open(os.path.join(os.environ["WEBBPSF_PATH"], "version.txt"), 'r') as inf:
+    webbpsf_data_version = inf.readline().strip()
+print("webbpsf: version {}, data version {}".format(webbpsf_version, webbpsf_data_version))
+
 app = Flask(__name__)
 app.config['DEBUG'] = __name__ == '__main__'
 app.config['PROPAGATE_EXCEPTIONS'] = True
@@ -436,7 +442,7 @@ def input(raw_sim=None):
                                          telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                          server_mod_time=server_mod_time, stips_version=stips_version, 
                                          stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
-                                         grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                                         grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                                          email_test=app.config['email_test']))
     if params['user']['update_user'] == 'yes':
         if params['user']['save_user']:
@@ -601,8 +607,8 @@ def final(raw_sim):
         return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
                                telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
-                               email_test=app.config['email_test'], instrument_help=instrument_help)
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version, 
+                               grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'], instrument_help=instrument_help)
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
     else:
@@ -610,7 +616,7 @@ def final(raw_sim):
         return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
                                telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                                grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
                                email_test=app.config['email_test'])
 
@@ -636,7 +642,7 @@ def docs(raw_page='main', raw_anchor=''):
         doc_template = "docs/notes.html"
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
                            telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, server_mod_time=server_mod_time, 
-                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 @app.route('/progress')
@@ -650,7 +656,7 @@ def progress():
     task_id = asciify(request.args.get('tid', '')[:1000])
     return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, task_id=task_id, time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, 
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_stips=grid_stips_info, email_test=app.config['email_test']) if task_id else redirect('/')
 
 @app.route("/form")
@@ -1007,6 +1013,7 @@ def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message='Not Found', 
                            description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
                            stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                           webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            email_test=app.config['email_test']), 404
 
 @app.errorhandler(ConnectionError)
@@ -1016,7 +1023,8 @@ def page_not_found(e):
     description = "Check to make sure that %s running." % (debug_description if app.debug else production_description)
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message='Coult not connect to the task queue', description=description, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info,
+                           webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test']), 500
 
 @app.route('/error/')
@@ -1030,7 +1038,8 @@ def error(raw_sim=None):
     app.logger.error('Rendering error page')
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message=session['message'],
                            description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info,
+                           webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 @app.route('/unauthorized/')
@@ -1039,7 +1048,7 @@ def unauthorized():
     return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message=session['message'], description=session['description'], time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 def check_authorized(headers, config):
