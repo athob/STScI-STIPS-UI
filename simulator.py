@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from werkzeug import secure_filename
-import cPickle, datetime, git, glob, json, logging, logging.config, os, platform, re, shutil, sys, numpy, sqlite3, time, zipfile
+import cPickle, datetime, git, glob, json, logging, logging.config, os, platform, pkg_resources, re, shutil, sys, numpy, sqlite3, time, zipfile
 import montage_wrapper as montage
 import unicodedata
 
@@ -88,7 +88,9 @@ print("Grid: {}, {}".format(grid_pandeia_info, grid_stips_info))
 
 pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
 with open(pandeia_version_file, 'r') as inf:
-    pandeia_version_info = inf.readline().strip()
+    pandeia_data_version_info = inf.readline().strip()
+print("Pandeia Data Version: {}".format(pandeia_data_version_info))
+pandeia_version_info = pkg_resources.get_distribution("pandeia.engine").version
 print("Pandeia Version: {}".format(pandeia_version_info))
 
 import webbpsf
@@ -441,7 +443,7 @@ def input(raw_sim=None):
     resp = make_response(render_template('input.html', params=params, instruments=INSTRUMENTS,
                                          telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                          server_mod_time=server_mod_time, stips_version=stips_version, 
-                                         stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, 
+                                         stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, 
                                          grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                                          email_test=app.config['email_test']))
     if params['user']['update_user'] == 'yes':
@@ -607,7 +609,7 @@ def final(raw_sim):
         return render_template('output.html', time=time.ctime(), version=params['version'], title=params['out_prefix']+" Results", catalogues=input_names,
                                observations=obs, web_path=url_for('static',filename='sim_temp/', ), runtime=runtime, zip_name=params['out_prefix']+'.zip', 
                                telescope=telescope, instrument_intro=instrument_intro, sim=sim, server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version, 
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version, 
                                grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'], instrument_help=instrument_help)
     elif os.path.exists(os.path.join(os.getcwd(),app.config['_CACHE_PATH']+sim+'_scm.pickle')):
         return redirect(url_for('output',raw_sim=sim))
@@ -616,7 +618,7 @@ def final(raw_sim):
         return render_template('not_found.html',time=time.ctime(),version=params['version'],id=sim,
                                telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                                server_mod_time=server_mod_time, stips_version=stips_version, 
-                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
+                               stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                                grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
                                email_test=app.config['email_test'])
 
@@ -642,7 +644,7 @@ def docs(raw_page='main', raw_anchor=''):
         doc_template = "docs/notes.html"
     return render_template(doc_template, anchor=anchor, time=time.ctime(), version=app.config['_VERSION'], 
                            telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, server_mod_time=server_mod_time, 
-                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
+                           stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 @app.route('/progress')
@@ -656,7 +658,7 @@ def progress():
     task_id = asciify(request.args.get('tid', '')[:1000])
     return render_template('progress.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, task_id=task_id, time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, grid_pandeia=grid_pandeia_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_stips=grid_stips_info, email_test=app.config['email_test']) if task_id else redirect('/')
 
 @app.route("/form")
@@ -1012,7 +1014,7 @@ def handle_form_upload(obj_response, files, form_values):
 def page_not_found(e):
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message='Not Found', 
                            description='The requested URL was not found on the server.', server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info,
                            webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            email_test=app.config['email_test']), 404
 
@@ -1023,7 +1025,7 @@ def page_not_found(e):
     description = "Check to make sure that %s running." % (debug_description if app.debug else production_description)
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message='Coult not connect to the task queue', description=description, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info,
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, 
                            webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test']), 500
 
@@ -1038,7 +1040,7 @@ def error(raw_sim=None):
     app.logger.error('Rendering error page')
     return render_template('error.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help, message=session['message'],
                            description=session['description'],time=time.ctime(),version=app.config['_VERSION'], sim=sim, 
-                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info,
+                           server_mod_time=server_mod_time, stips_version=stips_version, stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, 
                            webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
@@ -1048,7 +1050,7 @@ def unauthorized():
     return render_template('unauthorized.html', telescope=telescope, instrument_intro=instrument_intro, instrument_help=instrument_help,
                            message=session['message'], description=session['description'], time=time.ctime(),
                            version=app.config['_VERSION'], server_mod_time=server_mod_time, stips_version=stips_version, 
-                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
+                           stips_mod_time=stips_mod_time, pandeia_version=pandeia_version_info, pandeia_data_version=pandeia_data_version_info, webbpsf_version=webbpsf_version, webbpsf_data_version=webbpsf_data_version,
                            grid_pandeia=grid_pandeia_info, grid_stips=grid_stips_info, email_test=app.config['email_test'])
 
 def check_authorized(headers, config):
