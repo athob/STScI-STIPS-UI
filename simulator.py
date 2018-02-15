@@ -427,8 +427,11 @@ def input(raw_sim=None):
         with open(inf, 'rb') as f:
             params = cPickle.load(f)
         app.logger.info("User E-mail loaded as '{}'".format(params['user']['email']))
-        if params['user']['email'] == '' or params['user']['email'] is None:
+        if not validate_email(params['user']['email']) and validate_email(user_email):
             params['user']['email'] = user_email
+            app.logger.info("User E-mail set to '{}'".format(params['user']['email']))
+        elif not validate_email(params['user']['email']) and validate_email(params['user'].get('email_cookie', '')):
+            params['user']['email'] = params['user']['email_cookie']
             app.logger.info("User E-mail set to '{}'".format(params['user']['email']))
     else:
         uid = RandomPrefix()
@@ -436,6 +439,9 @@ def input(raw_sim=None):
         params = form.data
         params['uid'] = uid
         params['active_form'] = False
+        user_email = asciify(request.cookies.get('user_email', u'')[:1000])
+        app.logger.info("User E-mail Cookie has value: {}".format(user_email))
+        params['user']['email_cookie'] = user_email
         print("User E-mail initialized to '{}'".format(params['user']['email']))
         app.logger.info("User E-mail initialized to '{}'".format(params['user']['email']))
         with open(os.path.join(os.getcwd(), app.config['_CACHE_PATH'], uid+"_scm.pickle"), "wb") as outf:
@@ -505,7 +511,6 @@ def edit(raw_sim):
             cPickle.dump(params, outf)
     return redirect(url_for('input', raw_sim=uid))        
 
-@app.route('/output/<raw_sim>',methods=['GET','POST'])
 @app.route('/output/<raw_sim>')
 def output(raw_sim):
     print("Raw Prefix is {}".format(raw_sim[:1000]))
@@ -530,11 +535,6 @@ def output(raw_sim):
     params = cPickle.load(f)
     f.close()
     print("Loaded Parameter file")
-    user_email = asciify(request.cookies.get('user_email', u'')[:1000])
-    app.logger.info("User E-mail Cookie has value: {}".format(user_email))
-    if not validate_email(params['user']['email']) and validate_email(user_email):
-        app.logger.info("Setting output e-mail to {}".format(user_email))
-        params['user']['email'] = user_email
     params['out_prefix'] = sim
     params['in_path'] = os.path.join(os.getcwd(),app.config['_INP_PATH'])
     params['out_path'] = os.path.join(os.getcwd(),app.config['_OUT_PATH'])
