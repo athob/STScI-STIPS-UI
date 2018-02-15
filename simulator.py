@@ -439,9 +439,9 @@ def input(raw_sim=None):
         params = form.data
         params['uid'] = uid
         params['active_form'] = False
-        user_email = asciify(request.cookies.get('user_email', u'')[:1000])
-        app.logger.info("User E-mail Cookie has value: {}".format(user_email))
-        params['user']['email_cookie'] = user_email
+#        user_email = asciify(request.cookies.get('user_email', u'')[:1000])
+#        app.logger.info("User E-mail Cookie has value: {}".format(user_email))
+#        params['user']['email_cookie'] = user_email
         print("User E-mail initialized to '{}'".format(params['user']['email']))
         app.logger.info("User E-mail initialized to '{}'".format(params['user']['email']))
         with open(os.path.join(os.getcwd(), app.config['_CACHE_PATH'], uid+"_scm.pickle"), "wb") as outf:
