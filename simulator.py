@@ -505,6 +505,7 @@ def edit(raw_sim):
             cPickle.dump(params, outf)
     return redirect(url_for('input', raw_sim=uid))        
 
+@app.route('/output/<raw_sim>',methods=['GET','POST'])
 @app.route('/output/<raw_sim>')
 def output(raw_sim):
     print("Raw Prefix is {}".format(raw_sim[:1000]))
