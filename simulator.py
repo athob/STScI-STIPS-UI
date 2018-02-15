@@ -537,6 +537,13 @@ def output(raw_sim):
     params = cPickle.load(f)
     f.close()
     print("Loaded Parameter file")
+    try:
+        user_email = asciify(request.cookies.get('user_email', u'')[:1000])
+        if not validate_email("{}".format(params['user']['email'])) and validate_email(user_email):
+            params['user']['email'] = user_email
+            print("Set e-mail to {}".format(params['user']['email']))
+    except Exception as e:
+        print("Unable to get request object")
     params['out_prefix'] = sim
     params['in_path'] = os.path.join(os.getcwd(),app.config['_INP_PATH'])
     params['out_path'] = os.path.join(os.getcwd(),app.config['_OUT_PATH'])
