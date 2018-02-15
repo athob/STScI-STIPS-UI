@@ -427,8 +427,8 @@ def input(raw_sim=None):
         with open(inf, 'rb') as f:
             params = cPickle.load(f)
         app.logger.info("User E-mail loaded as '{}'".format(params['user']['email']))
-        if not validate_email(params['user']['email']) and validate_email(user_email):
-            params['user']['email'] = user_email
+        if not validate_email("{}".format(params['user']['email'])) and validate_email("{}".format(user_email)):
+            params['user']['email'] = "{}".format(user_email)
             app.logger.info("User E-mail set to '{}'".format(params['user']['email']))
         elif not validate_email(params['user']['email']) and validate_email(params['user'].get('email_cookie', '')):
             params['user']['email'] = params['user']['email_cookie']
