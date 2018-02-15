@@ -105,6 +105,7 @@ app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config.from_object("DefaultSettings")
 app.config['SIJAX_STATIC_PATH'] = os.path.join('.', os.path.dirname(__file__), app.config['_SIJ_PATH'])
 app.config['SIJAX_JSON_URI'] = '/' + app.config['_SIJ_PATH']
+app.config['parallel'] = False
 flask_sijax.Sijax(app)
 if os.path.exists('proxy.config'):
     f = open('proxy.config','rt')
