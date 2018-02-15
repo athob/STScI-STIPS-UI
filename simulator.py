@@ -417,6 +417,7 @@ def input(raw_sim=None):
         return g.sijax.process_request()
     if sim is not None:
         user_email = asciify(request.cookies.get('user_email', u'')[:1000])
+        print("User E-mail cookie has value: {}".format(user_email))
         app.logger.info("User E-mail Cookie has value: {}".format(user_email))
         inf = os.path.join(os.getcwd(),app.config['_CACHE_PATH'],sim+"_scm.pickle")
         if not os.path.exists(inf):
@@ -430,10 +431,10 @@ def input(raw_sim=None):
         app.logger.info("User E-mail loaded as '{}'".format(params['user']['email']))
         if not validate_email("{}".format(params['user']['email'])) and validate_email("{}".format(user_email)):
             params['user']['email'] = "{}".format(user_email)
-            app.logger.info("User E-mail set to '{}'".format(params['user']['email']))
+            print("User E-mail set to '{}'".format(params['user']['email']))
         elif not validate_email(params['user']['email']) and validate_email(params['user'].get('email_cookie', '')):
             params['user']['email'] = params['user']['email_cookie']
-            app.logger.info("User E-mail set to '{}'".format(params['user']['email']))
+            print("User E-mail set to '{}'".format(params['user']['email']))
     else:
         uid = RandomPrefix()
         form = ParameterForm()
