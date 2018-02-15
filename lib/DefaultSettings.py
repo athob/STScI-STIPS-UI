@@ -25,6 +25,7 @@ check_group = "0"
 allowed_groups = []
 check_users = "0"
 user_db = "users.db"
+parallel = False
 
 SECRET_KEY = '\x98\x14"t\x11\xe63\xd1S\xc28\xd6\x19b\x12*\n\x14\x1f\xbf\xf6\xbbxQ'
 

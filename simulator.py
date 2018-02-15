@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from werkzeug import secure_filename
-import cPickle, datetime, git, glob, json, logging, logging.config, os, platform, pkg_resources, re, shutil, sys, numpy, sqlite3, time, zipfile
+import ast, cPickle, datetime, git, glob, json, logging, logging.config, os, platform, pkg_resources, re, shutil, sys, numpy, sqlite3, time, zipfile
 import montage_wrapper as montage
 import unicodedata
 
@@ -21,6 +21,7 @@ from argparse import ArgumentParser
 from logging import FileHandler, Formatter, DEBUG
 from astropy.io import fits as pyfits
 from wtforms import HiddenField
+from validate_email import validate_email
 
 os.environ['TERM'] = 'xterm'
 os.environ['PYSYN_CDBS'] = os.path.join(os.getcwd(),'sim_input','cdbs')
@@ -81,9 +82,8 @@ stips_mod_time = datetime.datetime.fromtimestamp(committed_date)
 print("STIPS Mod Time: {}".format(stips_mod_time))
 print("STIPS Version: {}".format(stips_version))
 
-with open(os.path.join(os.environ['stips_data'], 'grid', 'VERSION.txt'), 'r') as inf:
-    grid_pandeia_info = inf.readline().strip()
-    grid_stips_info = inf.readline().strip()
+grid_pandeia_info = stips.__grid__pandeia__version__
+grid_stips_info = stips.__grid__stips__version__
 print("Grid: {}, {}".format(grid_pandeia_info, grid_stips_info))
 
 pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
@@ -115,6 +115,8 @@ if os.path.exists('proxy.config'):
             items = line.split()
             if "," in items[1]:
                 app.config[items[0]] = items[1].split(",")
+            elif items[1][:5] == "bool:":
+                app.config[items[0]] = ast.literal_eval(items[1][5:])
             else:
                 app.config[items[0]] = items[1]
     f.close()
@@ -224,7 +226,7 @@ def observation(self,params,observation):
         result = celery.AsyncResult(id=task_id)
         return result.state
     def set_task_state(state):
-        self.update_state(state=state)
+        self.update_state(task_id=task_id, state=state)
     out_prefix = params['out_prefix']
     sparams = params.copy()
     sparams['logger'] = celery_logger
@@ -234,7 +236,7 @@ def observation(self,params,observation):
     celery_logger.info("Running observation {} for simulation {}".format(obs_num, out_prefix))
     celery_logger.info("Observation Offsets are {}".format(observation['offsets']))
     obset = []
-    obs = ObservationModule(observation,**sparams)
+    obs = ObservationModule(observation, **sparams)
     n_obs = obs.totalObservations()
     for img in params['in_imgs']:
         obs.prepImage(img)
@@ -527,10 +529,16 @@ def output(raw_sim):
     params = cPickle.load(f)
     f.close()
     print("Loaded Parameter file")
+    user_email = asciify(request.cookies.get('user_email', u'')[:1000])
+    app.logger.info("User E-mail Cookie has value: {}".format(user_email))
+    if not validate_email(params['user']['email']) and validate_email(user_email):
+        app.logger.info("Setting output e-mail to {}".format(user_email))
+        params['user']['email'] = user_email
     params['out_prefix'] = sim
     params['in_path'] = os.path.join(os.getcwd(),app.config['_INP_PATH'])
     params['out_path'] = os.path.join(os.getcwd(),app.config['_OUT_PATH'])
     params['version'] = app.config['_VERSION']
+    params['parallel'] = app.config['parallel']
     print("Set Current Parameters")
     if 'proxy' in app.config:
         print("Setting parameters for proxy")
