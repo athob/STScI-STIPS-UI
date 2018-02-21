@@ -1,5 +1,6 @@
 # Project files that don't belong on git #
 ##########################################
+proxy.config
 sim_input/cdbs
 sim_input/pandeia_data
 sim_input/webbpsf-data

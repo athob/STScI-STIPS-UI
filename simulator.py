@@ -432,9 +432,6 @@ def input(raw_sim=None):
         if not validate_email("{}".format(params['user']['email'])) and validate_email("{}".format(user_email)):
             params['user']['email'] = "{}".format(user_email)
             print("User E-mail set to '{}'".format(params['user']['email']))
-        elif not validate_email(params['user']['email']) and validate_email(params['user'].get('email_cookie', '')):
-            params['user']['email'] = params['user']['email_cookie']
-            print("User E-mail set to '{}'".format(params['user']['email']))
     else:
         uid = RandomPrefix()
         form = ParameterForm()
