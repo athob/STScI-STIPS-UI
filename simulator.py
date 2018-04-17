@@ -89,7 +89,7 @@ print("Grid: {}, {}".format(grid_pandeia_info, grid_stips_info))
 pandeia_version_file = os.path.join(os.environ["pandeia_refdata"], "VERSION_PSF")
 with open(pandeia_version_file, 'r') as inf:
     pandeia_data_version_info = inf.readline().strip()
-print("Pandeia Data Version: {}".format(pandeia_data_version_info))
+print("Pandeia Data Version: {} (from {})".format(pandeia_data_version_info, pandeia_version_file))
 pandeia_version_info = pkg_resources.get_distribution("pandeia.engine").version
 print("Pandeia Version: {}".format(pandeia_version_info))
 
