@@ -401,6 +401,14 @@ def input(raw_sim=None):
         sim = asciify(raw_sim[:1000])
 #     print "All headers:"
 #     print request.headers
+
+    # Log basic info about what versions we're running on, and where from.
+    app.logger.critical("STIPS Mod Time: {}".format(stips_mod_time))
+    app.logger.critical("STIPS Version: {}".format(stips_version))
+    app.logger.critical("Grid: {}, {}".format(grid_pandeia_info, grid_stips_info))
+    app.logger.critical("Pandeia Data Version: {} (from {})".format(pandeia_data_version_info, pandeia_version_file))
+    app.logger.critical("Pandeia Version: {}".format(pandeia_version_info))
+    app.logger.critical("webbpsf: version {}, data version {}".format(webbpsf_version, webbpsf_data_version))
     print "Internal Users Only: {}, user is internal: {}".format(app.config['internal_only'], request.headers.get('stsci-internal'))
     print "Check for Group ID: {}".format(app.config['check_group'])
     print "Allowed Groups: {}".format(app.config['allowed_groups'])
