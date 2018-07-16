@@ -155,7 +155,7 @@ instrument_intro_template =  {
 
 # Introductory HTML
 instrument_help_template =  {
-                        'WFIRST': """Please contact the <a href="mailto:help@stsci.edu">STScI Helpdesk</a> for assistance.""",
+                        'WFIRST': """Please contact the <a href="http://jwsthelp.stsci.edu/">STScI Helpdesk</a> for assistance.""",
                         'JWST': """Please visit the <a href="http://jwsthelp.stsci.edu/">JWST Helpdesk</a> for assistance.""",
                         'JWST-WFIRST': """Please E-mail <a href="mailto:york@stsci.edu">Brian York</a> for assistance."""
                     }
